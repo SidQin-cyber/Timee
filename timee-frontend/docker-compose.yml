@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: timee-postgres
+    environment:
+      POSTGRES_DB: timee
+      POSTGRES_USER: timee
+      POSTGRES_PASSWORD: timee_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - timee-network
+
+  # Redis for caching and pub/sub
+  redis:
+    image: redis:7-alpine
+    container_name: timee-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - timee-network
+
+  # NestJS API Backend
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    container_name: timee-api
+    environment:
+      DATABASE_URL: postgresql://timee:timee_password@postgres:5432/timee?schema=public
+      REDIS_URL: redis://redis:6379
+      PORT: 3001
+      NODE_ENV: production
+      CORS_ORIGIN: http://localhost:3000
+    ports:
+      - "3001:3001"
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./apps/api:/app
+      - /app/node_modules
+    networks:
+      - timee-network
+    restart: unless-stopped
+
+  # React Frontend (Optional, for full-stack deployment)
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    container_name: timee-web
+    environment:
+      VITE_API_URL: http://localhost:3001/api
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+    networks:
+      - timee-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  timee-network:
+    driver: bridge 

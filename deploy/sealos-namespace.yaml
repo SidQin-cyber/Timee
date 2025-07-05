@@ -1,0 +1,66 @@
+# 创建生产命名空间
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: timee-production
+  labels:
+    name: timee-production
+    environment: production
+    app: timee
+---
+# 资源配额
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: timee-resource-quota
+  namespace: timee-production
+spec:
+  hard:
+    requests.cpu: "2"
+    requests.memory: 4Gi
+    limits.cpu: "4"
+    limits.memory: 8Gi
+    persistentvolumeclaims: "5"
+    pods: "10"
+    services: "5"
+    secrets: "10"
+    configmaps: "10"
+---
+# 网络策略（可选，增强安全性）
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: timee-network-policy
+  namespace: timee-production
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # 允许来自 Nginx Ingress 的流量
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+  # 允许命名空间内部通信
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: timee-production
+  egress:
+  # 允许 DNS 查询
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+  # 允许 HTTPS 出站流量
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 443
+  # 允许数据库连接
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 5432 

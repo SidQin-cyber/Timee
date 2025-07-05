@@ -1,0 +1,310 @@
+2025-06-17T13:40:51: [HPM] Proxy created: /  -> http://localhost:8080
+2025-06-17T13:40:51: [HPM] Proxy created: /  -> http://localhost:8080/api/health
+2025-06-17T13:40:51: [HPM] Proxy created: /  -> http://localhost:5173
+Error: bind EACCES 0.0.0.0:80
+    at listenOnPrimaryHandle (node:net:1988:18)
+    at rr (node:internal/cluster/child:163:12)
+    at Worker.<anonymous> (node:internal/cluster/child:113:7)
+    at process.onInternalMessage (node:internal/cluster/utils:49:5)
+    at process.emit (node:events:530:35)
+    at emit (node:internal/child_process:950:14)
+    at process.processTicksAndRejections (node:internal/process/task_queues:91:21)
+2025-06-17T13:40:52: [HPM] Proxy created: /  -> http://localhost:8080
+2025-06-17T13:40:52: [HPM] Proxy created: /  -> http://localhost:8080/api/health
+2025-06-17T13:40:52: [HPM] Proxy created: /  -> http://localhost:5173
+Error: bind EACCES 0.0.0.0:80
+    at listenOnPrimaryHandle (node:net:1988:18)
+    at rr (node:internal/cluster/child:163:12)
+    at Worker.<anonymous> (node:internal/cluster/child:113:7)
+    at process.onInternalMessage (node:internal/cluster/utils:49:5)
+    at process.emit (node:events:530:35)
+    at emit (node:internal/child_process:950:14)
+    at process.processTicksAndRejections (node:internal/process/task_queues:91:21)
+2025-06-17T13:40:53: [HPM] Proxy created: /  -> http://localhost:8080
+2025-06-17T13:40:53: [HPM] Proxy created: /  -> http://localhost:8080/api/health
+2025-06-17T13:40:53: [HPM] Proxy created: /  -> http://localhost:5173
+Error: bind EACCES 0.0.0.0:80
+    at listenOnPrimaryHandle (node:net:1988:18)
+    at rr (node:internal/cluster/child:163:12)
+    at Worker.<anonymous> (node:internal/cluster/child:113:7)
+    at process.onInternalMessage (node:internal/cluster/utils:49:5)
+    at process.emit (node:events:530:35)
+    at emit (node:internal/child_process:950:14)
+    at process.processTicksAndRejections (node:internal/process/task_queues:91:21)
+2025-06-17T13:40:54: [HPM] Proxy created: /  -> http://localhost:8080
+2025-06-17T13:40:54: [HPM] Proxy created: /  -> http://localhost:8080/api/health
+2025-06-17T13:40:54: [HPM] Proxy created: /  -> http://localhost:5173
+Error: bind EACCES 0.0.0.0:80
+    at listenOnPrimaryHandle (node:net:1988:18)
+    at rr (node:internal/cluster/child:163:12)
+    at Worker.<anonymous> (node:internal/cluster/child:113:7)
+    at process.onInternalMessage (node:internal/cluster/utils:49:5)
+    at process.emit (node:events:530:35)
+    at emit (node:internal/child_process:950:14)
+    at process.processTicksAndRejections (node:internal/process/task_queues:91:21)
+2025-06-17T13:40:54: [HPM] Proxy created: /  -> http://localhost:8080
+2025-06-17T13:40:54: [HPM] Proxy created: /  -> http://localhost:8080/api/health
+2025-06-17T13:40:54: [HPM] Proxy created: /  -> http://localhost:5173
+2025-06-17T13:40:55: [HPM] Proxy created: /  -> http://localhost:8080
+2025-06-17T13:40:55: [HPM] Proxy created: /  -> http://localhost:8080/api/health
+2025-06-17T13:40:55: [HPM] Proxy created: /  -> http://localhost:5173
+Error: bind EACCES 0.0.0.0:80
+    at listenOnPrimaryHandle (node:net:1988:18)
+    at rr (node:internal/cluster/child:163:12)
+    at Worker.<anonymous> (node:internal/cluster/child:113:7)
+    at process.onInternalMessage (node:internal/cluster/utils:49:5)
+    at process.emit (node:events:530:35)
+    at emit (node:internal/child_process:950:14)
+    at process.processTicksAndRejections (node:internal/process/task_queues:91:21)
+2025-06-17T13:40:55: [HPM] Proxy created: /  -> http://localhost:8080
+2025-06-17T13:40:55: [HPM] Proxy created: /  -> http://localhost:8080/api/health
+2025-06-17T13:40:55: [HPM] Proxy created: /  -> http://localhost:5173
+Error: bind EACCES 0.0.0.0:80
+    at listenOnPrimaryHandle (node:net:1988:18)
+    at rr (node:internal/cluster/child:163:12)
+    at Worker.<anonymous> (node:internal/cluster/child:113:7)
+    at process.onInternalMessage (node:internal/cluster/utils:49:5)
+    at process.emit (node:events:530:35)
+    at emit (node:internal/child_process:950:14)
+    at process.processTicksAndRejections (node:internal/process/task_queues:91:21)
+2025-06-17T13:40:56: [HPM] Proxy created: /  -> http://localhost:8080
+2025-06-17T13:40:56: [HPM] Proxy created: /  -> http://localhost:8080/api/health
+2025-06-17T13:40:56: [HPM] Proxy created: /  -> http://localhost:5173
+2025-06-17T13:40:56: [HPM] Proxy created: /  -> http://localhost:8080
+2025-06-17T13:40:56: [HPM] Proxy created: /  -> http://localhost:8080/api/health
+2025-06-17T13:40:56: [HPM] Proxy created: /  -> http://localhost:5173
+Error: bind EACCES 0.0.0.0:80
+    at listenOnPrimaryHandle (node:net:1988:18)
+    at rr (node:internal/cluster/child:163:12)
+    at Worker.<anonymous> (node:internal/cluster/child:113:7)
+    at process.onInternalMessage (node:internal/cluster/utils:49:5)
+    at process.emit (node:events:530:35)
+    at emit (node:internal/child_process:950:14)
+    at process.processTicksAndRejections (node:internal/process/task_queues:91:21)
+2025-06-17T13:40:57: [HPM] Proxy created: /  -> http://localhost:8080
+2025-06-17T13:40:57: [HPM] Proxy created: /  -> http://localhost:8080/api/health
+2025-06-17T13:40:57: [HPM] Proxy created: /  -> http://localhost:5173
+Error: bind EACCES 0.0.0.0:80
+    at listenOnPrimaryHandle (node:net:1988:18)
+    at rr (node:internal/cluster/child:163:12)
+    at Worker.<anonymous> (node:internal/cluster/child:113:7)
+    at process.onInternalMessage (node:internal/cluster/utils:49:5)
+    at process.emit (node:events:530:35)
+    at emit (node:internal/child_process:950:14)
+    at process.processTicksAndRejections (node:internal/process/task_queues:91:21)
+2025-06-17T13:44:30: [HPM] Proxy created: /  -> http://localhost:8080
+2025-06-17T13:44:30: [HPM] Proxy created: /  -> http://localhost:8080/api/health
+2025-06-17T13:44:30: [HPM] Proxy created: /  -> http://localhost:5173
+Error: bind EACCES 0.0.0.0:80
+    at listenOnPrimaryHandle (node:net:1988:18)
+    at rr (node:internal/cluster/child:163:12)
+    at Worker.<anonymous> (node:internal/cluster/child:113:7)
+    at process.onInternalMessage (node:internal/cluster/utils:49:5)
+    at process.emit (node:events:530:35)
+    at emit (node:internal/child_process:950:14)
+    at process.processTicksAndRejections (node:internal/process/task_queues:91:21)
+2025-06-17T13:44:30: [HPM] Proxy created: /  -> http://localhost:8080
+2025-06-17T13:44:30: [HPM] Proxy created: /  -> http://localhost:8080/api/health
+2025-06-17T13:44:30: [HPM] Proxy created: /  -> http://localhost:5173
+Error: bind EACCES 0.0.0.0:80
+    at listenOnPrimaryHandle (node:net:1988:18)
+    at rr (node:internal/cluster/child:163:12)
+    at Worker.<anonymous> (node:internal/cluster/child:113:7)
+    at process.onInternalMessage (node:internal/cluster/utils:49:5)
+    at process.emit (node:events:530:35)
+    at emit (node:internal/child_process:950:14)
+    at process.processTicksAndRejections (node:internal/process/task_queues:91:21)
+2025-06-17T13:44:31: [HPM] Proxy created: /  -> http://localhost:8080
+2025-06-17T13:44:31: [HPM] Proxy created: /  -> http://localhost:8080/api/health
+2025-06-17T13:44:31: [HPM] Proxy created: /  -> http://localhost:5173
+Error: bind EACCES 0.0.0.0:80
+    at listenOnPrimaryHandle (node:net:1988:18)
+    at rr (node:internal/cluster/child:163:12)
+    at Worker.<anonymous> (node:internal/cluster/child:113:7)
+    at process.onInternalMessage (node:internal/cluster/utils:49:5)
+    at process.emit (node:events:530:35)
+    at emit (node:internal/child_process:950:14)
+    at process.processTicksAndRejections (node:internal/process/task_queues:91:21)
+2025-06-17T13:44:31: [HPM] Proxy created: /  -> http://localhost:8080
+2025-06-17T13:44:31: [HPM] Proxy created: /  -> http://localhost:8080/api/health
+2025-06-17T13:44:31: [HPM] Proxy created: /  -> http://localhost:5173
+Error: bind EACCES 0.0.0.0:80
+    at listenOnPrimaryHandle (node:net:1988:18)
+    at rr (node:internal/cluster/child:163:12)
+    at Worker.<anonymous> (node:internal/cluster/child:113:7)
+    at process.onInternalMessage (node:internal/cluster/utils:49:5)
+    at process.emit (node:events:530:35)
+    at emit (node:internal/child_process:950:14)
+    at process.processTicksAndRejections (node:internal/process/task_queues:91:21)
+2025-06-17T13:44:32: [HPM] Proxy created: /  -> http://localhost:8080
+2025-06-17T13:44:32: [HPM] Proxy created: /  -> http://localhost:8080/api/health
+2025-06-17T13:44:32: [HPM] Proxy created: /  -> http://localhost:5173
+Error: bind EACCES 0.0.0.0:80
+    at listenOnPrimaryHandle (node:net:1988:18)
+    at rr (node:internal/cluster/child:163:12)
+    at Worker.<anonymous> (node:internal/cluster/child:113:7)
+    at process.onInternalMessage (node:internal/cluster/utils:49:5)
+    at process.emit (node:events:530:35)
+    at emit (node:internal/child_process:950:14)
+    at process.processTicksAndRejections (node:internal/process/task_queues:91:21)
+2025-06-17T13:44:32: [HPM] Proxy created: /  -> http://localhost:8080
+2025-06-17T13:44:32: [HPM] Proxy created: /  -> http://localhost:8080/api/health
+2025-06-17T13:44:32: [HPM] Proxy created: /  -> http://localhost:5173
+Error: bind EACCES 0.0.0.0:80
+    at listenOnPrimaryHandle (node:net:1988:18)
+    at rr (node:internal/cluster/child:163:12)
+    at Worker.<anonymous> (node:internal/cluster/child:113:7)
+    at process.onInternalMessage (node:internal/cluster/utils:49:5)
+    at process.emit (node:events:530:35)
+    at emit (node:internal/child_process:950:14)
+    at process.processTicksAndRejections (node:internal/process/task_queues:91:21)
+2025-06-17T13:44:32: [HPM] Proxy created: /  -> http://localhost:8080
+2025-06-17T13:44:32: [HPM] Proxy created: /  -> http://localhost:8080/api/health
+2025-06-17T13:44:32: [HPM] Proxy created: /  -> http://localhost:5173
+Error: bind EACCES 0.0.0.0:80
+    at listenOnPrimaryHandle (node:net:1988:18)
+    at rr (node:internal/cluster/child:163:12)
+    at Worker.<anonymous> (node:internal/cluster/child:113:7)
+    at process.onInternalMessage (node:internal/cluster/utils:49:5)
+    at process.emit (node:events:530:35)
+    at emit (node:internal/child_process:950:14)
+    at process.processTicksAndRejections (node:internal/process/task_queues:91:21)
+2025-06-17T13:44:33: [HPM] Proxy created: /  -> http://localhost:8080
+2025-06-17T13:44:33: [HPM] Proxy created: /  -> http://localhost:8080/api/health
+2025-06-17T13:44:33: [HPM] Proxy created: /  -> http://localhost:5173
+Error: bind EACCES 0.0.0.0:80
+    at listenOnPrimaryHandle (node:net:1988:18)
+    at rr (node:internal/cluster/child:163:12)
+    at Worker.<anonymous> (node:internal/cluster/child:113:7)
+    at process.onInternalMessage (node:internal/cluster/utils:49:5)
+    at process.emit (node:events:530:35)
+    at emit (node:internal/child_process:950:14)
+    at process.processTicksAndRejections (node:internal/process/task_queues:91:21)
+2025-06-17T13:44:33: [HPM] Proxy created: /  -> http://localhost:8080
+2025-06-17T13:44:33: [HPM] Proxy created: /  -> http://localhost:8080/api/health
+2025-06-17T13:44:33: [HPM] Proxy created: /  -> http://localhost:5173
+Error: bind EACCES 0.0.0.0:80
+    at listenOnPrimaryHandle (node:net:1988:18)
+    at rr (node:internal/cluster/child:163:12)
+    at Worker.<anonymous> (node:internal/cluster/child:113:7)
+    at process.onInternalMessage (node:internal/cluster/utils:49:5)
+    at process.emit (node:events:530:35)
+    at emit (node:internal/child_process:950:14)
+    at process.processTicksAndRejections (node:internal/process/task_queues:91:21)
+2025-06-17T13:44:33: [HPM] Proxy created: /  -> http://localhost:8080
+2025-06-17T13:44:33: [HPM] Proxy created: /  -> http://localhost:8080/api/health
+2025-06-17T13:44:33: [HPM] Proxy created: /  -> http://localhost:5173
+Error: bind EACCES 0.0.0.0:80
+    at listenOnPrimaryHandle (node:net:1988:18)
+    at rr (node:internal/cluster/child:163:12)
+    at Worker.<anonymous> (node:internal/cluster/child:113:7)
+    at process.onInternalMessage (node:internal/cluster/utils:49:5)
+    at process.emit (node:events:530:35)
+    at emit (node:internal/child_process:950:14)
+    at process.processTicksAndRejections (node:internal/process/task_queues:91:21)
+2025-06-17T13:45:34: [HPM] Proxy created: /  -> http://localhost:3000
+2025-06-17T13:45:34: [HPM] Proxy created: /  -> http://localhost:3000/api/health
+2025-06-17T13:45:34: [HPM] Proxy created: /  -> http://localhost:5173
+2025-06-17T13:45:34: 🚀 Proxy server running on port 8080
+2025-06-17T13:45:34: 🌐 External access: http://wmxkwzbmhlj.sealoshzh.site
+2025-06-17T13:45:34: 📱 Frontend: http://localhost:5173
+2025-06-17T13:45:34: 📡 API: http://localhost:3000
+2025-06-17T13:45:34: 💡 Routing:
+2025-06-17T13:45:34:    - /api/* -> Backend API (port 3000)
+2025-06-17T13:45:34:    - /health -> API Health Check
+2025-06-17T13:45:34:    - /* -> Frontend App (port 5173)
+2025-06-17T13:45:39: (node:1811) [DEP0060] DeprecationWarning: The `util._extend` API is deprecated. Please use Object.assign() instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+2025-06-17T13:45:39: Frontend Proxy Error: 
+2025-06-17T13:45:39: [HPM] Error occurred while proxying request 127.0.0.1:8080/ to http://localhost:5173/ [ECONNREFUSED] (https://nodejs.org/api/errors.html#errors_common_system_errors)
+2025-06-17T13:45:49: Frontend Proxy Error: 
+2025-06-17T13:45:49: [HPM] Error occurred while proxying request 127.0.0.1:8080/ to http://localhost:5173/ [ECONNREFUSED] (https://nodejs.org/api/errors.html#errors_common_system_errors)
+2025-06-17T13:46:07: Frontend Proxy Error: 
+2025-06-17T13:46:07: [HPM] Error occurred while proxying request localhost:8080/ to http://localhost:5173/ [ECONNREFUSED] (https://nodejs.org/api/errors.html#errors_common_system_errors)
+2025-06-17T13:46:38: Frontend Proxy Error: 
+2025-06-17T13:46:38: [HPM] Error occurred while proxying request wmxkwzbmhflj.sealoshzh.site/ to http://localhost:5173/ [ECONNREFUSED] (https://nodejs.org/api/errors.html#errors_common_system_errors)
+2025-06-17T13:46:43: Frontend Proxy Error: 
+2025-06-17T13:46:43: [HPM] Error occurred while proxying request wmxkwzbmhflj.sealoshzh.site/ to http://localhost:5173/ [ECONNREFUSED] (https://nodejs.org/api/errors.html#errors_common_system_errors)
+2025-06-17T13:54:45: [HPM] Proxy created: /  -> http://localhost:3000
+2025-06-17T13:54:45: [HPM] Proxy created: /  -> http://localhost:3000/api/health
+2025-06-17T13:54:45: [HPM] Proxy created: /  -> http://localhost:5173
+2025-06-17T13:54:45: 🚀 Proxy server running on port 8080
+2025-06-17T13:54:45: 🌐 External access: http://wmxkwzbmhlj.sealoshzh.site
+2025-06-17T13:54:45: 📱 Frontend: http://localhost:5173
+2025-06-17T13:54:45: 📡 API: http://localhost:3000
+2025-06-17T13:54:45: 💡 Routing:
+2025-06-17T13:54:45:    - /api/* -> Backend API (port 3000)
+2025-06-17T13:54:45:    - /health -> API Health Check
+2025-06-17T13:54:45:    - /* -> Frontend App (port 5173)
+2025-06-17T13:54:49: (node:5905) [DEP0060] DeprecationWarning: The `util._extend` API is deprecated. Please use Object.assign() instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+2025-06-17T13:54:50: [HPM] Upgrading to WebSocket
+2025-06-17T13:54:54: [HPM] Client disconnected
+2025-06-17T13:55:41: Frontend Proxy Error: 
+2025-06-17T13:55:41: [HPM] Error occurred while proxying request wmxkwzbmhflj.sealoshzh.site/ to http://localhost:5173/ [ECONNREFUSED] (https://nodejs.org/api/errors.html#errors_common_system_errors)
+2025-06-17T13:57:42: Frontend Proxy Error: 
+2025-06-17T13:57:42: [HPM] Error occurred while proxying request wmxkwzbmhflj.sealoshzh.site/ to http://localhost:5173/ [ECONNREFUSED] (https://nodejs.org/api/errors.html#errors_common_system_errors)
+2025-06-17T13:58:30: Frontend Proxy Error: 
+2025-06-17T13:58:30: [HPM] Error occurred while proxying request wmxkwzbmhflj.sealoshzh.site/ to http://localhost:5173/ [ECONNREFUSED] (https://nodejs.org/api/errors.html#errors_common_system_errors)
+2025-06-17T13:58:31: Frontend Proxy Error: 
+2025-06-17T13:58:31: [HPM] Error occurred while proxying request wmxkwzbmhflj.sealoshzh.site/favicon.ico to http://localhost:5173/ [ECONNREFUSED] (https://nodejs.org/api/errors.html#errors_common_system_errors)
+2025-06-17T13:58:34: Frontend Proxy Error: 
+2025-06-17T13:58:34: [HPM] Error occurred while proxying request wmxkwzbmhflj.sealoshzh.site/ to http://localhost:5173/ [ECONNREFUSED] (https://nodejs.org/api/errors.html#errors_common_system_errors)
+2025-06-17T13:58:34: Frontend Proxy Error: 
+2025-06-17T13:58:34: [HPM] Error occurred while proxying request wmxkwzbmhflj.sealoshzh.site/favicon.ico to http://localhost:5173/ [ECONNREFUSED] (https://nodejs.org/api/errors.html#errors_common_system_errors)
+2025-06-17T14:00:21: Frontend Proxy Error: 
+2025-06-17T14:00:21: [HPM] Error occurred while proxying request wmxkwzbmhflj.sealoshzh.site/ to http://localhost:5173/ [ECONNREFUSED] (https://nodejs.org/api/errors.html#errors_common_system_errors)
+2025-06-17T14:02:11: Frontend Proxy Error: 
+2025-06-17T14:02:11: [HPM] Error occurred while proxying request wmxkwzbmhflj.sealoshzh.site/ to http://localhost:5173/ [ECONNREFUSED] (https://nodejs.org/api/errors.html#errors_common_system_errors)
+2025-06-17T14:02:12: Frontend Proxy Error: 
+2025-06-17T14:02:12: [HPM] Error occurred while proxying request wmxkwzbmhflj.sealoshzh.site/ to http://localhost:5173/ [ECONNREFUSED] (https://nodejs.org/api/errors.html#errors_common_system_errors)
+2025-06-17T14:03:16: Frontend Proxy Error: 
+2025-06-17T14:03:16: [HPM] Error occurred while proxying request wmxkwzbmhflj.sealoshzh.site/ to http://localhost:5173/ [ECONNREFUSED] (https://nodejs.org/api/errors.html#errors_common_system_errors)
+2025-06-17T14:03:17: Frontend Proxy Error: 
+2025-06-17T14:03:17: [HPM] Error occurred while proxying request wmxkwzbmhflj.sealoshzh.site/ to http://localhost:5173/ [ECONNREFUSED] (https://nodejs.org/api/errors.html#errors_common_system_errors)
+2025-06-17T14:05:51: Frontend Proxy Error: 
+2025-06-17T14:05:51: [HPM] Error occurred while proxying request wmxkwzbmhflj.sealoshzh.site/ to http://localhost:5173/ [ECONNREFUSED] (https://nodejs.org/api/errors.html#errors_common_system_errors)
+2025-06-17T14:06:54: Frontend Proxy Error: 
+2025-06-17T14:06:54: [HPM] Error occurred while proxying request wmxkwzbmhflj.sealoshzh.site/ to http://localhost:5173/ [ECONNREFUSED] (https://nodejs.org/api/errors.html#errors_common_system_errors)
+2025-06-17T14:07:19: Frontend Proxy Error: 
+2025-06-17T14:07:19: [HPM] Error occurred while proxying request wmxkwzbmhflj.sealoshzh.site/ to http://localhost:5173/ [ECONNREFUSED] (https://nodejs.org/api/errors.html#errors_common_system_errors)
+2025-06-17T14:08:07: Frontend Proxy Error: 
+2025-06-17T14:08:07: [HPM] Error occurred while proxying request wmxkwzbmhflj.sealoshzh.site/ to http://localhost:5173/ [ECONNREFUSED] (https://nodejs.org/api/errors.html#errors_common_system_errors)
+2025-06-17T14:08:30: Frontend Proxy Error: 
+2025-06-17T14:08:30: [HPM] Error occurred while proxying request wmxkwzbmhflj.sealoshzh.site/ to http://localhost:5173/ [ECONNREFUSED] (https://nodejs.org/api/errors.html#errors_common_system_errors)
+2025-06-17T14:08:31: Frontend Proxy Error: 
+2025-06-17T14:08:31: [HPM] Error occurred while proxying request wmxkwzbmhflj.sealoshzh.site/ to http://localhost:5173/ [ECONNREFUSED] (https://nodejs.org/api/errors.html#errors_common_system_errors)
+2025-06-17T14:08:32: Frontend Proxy Error: 
+2025-06-17T14:08:32: [HPM] Error occurred while proxying request wmxkwzbmhflj.sealoshzh.site/ to http://localhost:5173/ [ECONNREFUSED] (https://nodejs.org/api/errors.html#errors_common_system_errors)
+2025-06-17T14:08:33: Frontend Proxy Error: 
+2025-06-17T14:08:33: [HPM] Error occurred while proxying request wmxkwzbmhflj.sealoshzh.site/ to http://localhost:5173/ [ECONNREFUSED] (https://nodejs.org/api/errors.html#errors_common_system_errors)
+2025-06-17T14:08:34: Frontend Proxy Error: 
+2025-06-17T14:08:34: [HPM] Error occurred while proxying request wmxkwzbmhflj.sealoshzh.site/ to http://localhost:5173/ [ECONNREFUSED] (https://nodejs.org/api/errors.html#errors_common_system_errors)
+2025-06-17T14:08:34: Frontend Proxy Error: 
+2025-06-17T14:08:34: [HPM] Error occurred while proxying request wmxkwzbmhflj.sealoshzh.site/ to http://localhost:5173/ [ECONNREFUSED] (https://nodejs.org/api/errors.html#errors_common_system_errors)
+2025-06-17T14:08:35: Frontend Proxy Error: 
+2025-06-17T14:08:35: [HPM] Error occurred while proxying request wmxkwzbmhflj.sealoshzh.site/ to http://localhost:5173/ [ECONNREFUSED] (https://nodejs.org/api/errors.html#errors_common_system_errors)
+2025-06-17T14:08:35: Frontend Proxy Error: 
+2025-06-17T14:08:35: [HPM] Error occurred while proxying request wmxkwzbmhflj.sealoshzh.site/ to http://localhost:5173/ [ECONNREFUSED] (https://nodejs.org/api/errors.html#errors_common_system_errors)
+2025-06-17T14:08:35: Frontend Proxy Error: 
+2025-06-17T14:08:35: [HPM] Error occurred while proxying request wmxkwzbmhflj.sealoshzh.site/ to http://localhost:5173/ [ECONNREFUSED] (https://nodejs.org/api/errors.html#errors_common_system_errors)
+2025-06-17T14:08:35: Frontend Proxy Error: 
+2025-06-17T14:08:35: [HPM] Error occurred while proxying request wmxkwzbmhflj.sealoshzh.site/ to http://localhost:5173/ [ECONNREFUSED] (https://nodejs.org/api/errors.html#errors_common_system_errors)
+2025-06-17T14:08:35: Frontend Proxy Error: 
+2025-06-17T14:08:35: [HPM] Error occurred while proxying request wmxkwzbmhflj.sealoshzh.site/ to http://localhost:5173/ [ECONNREFUSED] (https://nodejs.org/api/errors.html#errors_common_system_errors)
+2025-06-17T14:08:36: Frontend Proxy Error: 
+2025-06-17T14:08:36: [HPM] Error occurred while proxying request wmxkwzbmhflj.sealoshzh.site/ to http://localhost:5173/ [ECONNREFUSED] (https://nodejs.org/api/errors.html#errors_common_system_errors)
+2025-06-17T14:08:36: Frontend Proxy Error: 
+2025-06-17T14:08:36: [HPM] Error occurred while proxying request wmxkwzbmhflj.sealoshzh.site/ to http://localhost:5173/ [ECONNREFUSED] (https://nodejs.org/api/errors.html#errors_common_system_errors)
+2025-06-17T14:08:36: Frontend Proxy Error: 
+2025-06-17T14:08:36: [HPM] Error occurred while proxying request wmxkwzbmhflj.sealoshzh.site/ to http://localhost:5173/ [ECONNREFUSED] (https://nodejs.org/api/errors.html#errors_common_system_errors)
+2025-06-17T14:08:36: Frontend Proxy Error: 
+2025-06-17T14:08:36: [HPM] Error occurred while proxying request wmxkwzbmhflj.sealoshzh.site/ to http://localhost:5173/ [ECONNREFUSED] (https://nodejs.org/api/errors.html#errors_common_system_errors)
+2025-06-17T14:08:36: Frontend Proxy Error: 
+2025-06-17T14:08:36: [HPM] Error occurred while proxying request wmxkwzbmhflj.sealoshzh.site/ to http://localhost:5173/ [ECONNREFUSED] (https://nodejs.org/api/errors.html#errors_common_system_errors)
+2025-06-17T14:08:36: Frontend Proxy Error: 
+2025-06-17T14:08:36: [HPM] Error occurred while proxying request wmxkwzbmhflj.sealoshzh.site/ to http://localhost:5173/ [ECONNREFUSED] (https://nodejs.org/api/errors.html#errors_common_system_errors)
+2025-06-17T14:09:28: Frontend Proxy Error: 
+2025-06-17T14:09:28: [HPM] Error occurred while proxying request localhost:8080/ to http://localhost:5173/ [ECONNREFUSED] (https://nodejs.org/api/errors.html#errors_common_system_errors)
+2025-06-17T14:09:31: Frontend Proxy Error: 
+2025-06-17T14:09:31: [HPM] Error occurred while proxying request localhost:8080/ to http://localhost:5173/ [ECONNREFUSED] (https://nodejs.org/api/errors.html#errors_common_system_errors)

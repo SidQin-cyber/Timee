@@ -1,0 +1,58 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Event {
+  id            String   @id
+  title         String
+  description   String?
+  timezone      String   @default("UTC+8")
+  startDate     DateTime @map("start_date") @db.Date
+  endDate       DateTime @map("end_date") @db.Date
+  startTime     String   @map("start_time") @default("09:00")
+  endTime       String   @map("end_time") @default("17:00")
+  eventType     EventType @map("event_type") @default(GROUP)
+  includeTime   Boolean  @map("include_time") @default(false)
+  selectedDates String?  @map("selected_dates")
+  finalizedSlots String[] @map("finalized_slots")
+  createdBy     String?  @map("created_by")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  responses EventResponse[]
+
+  @@map("events")
+}
+
+model EventResponse {
+  id               String      @id @default(cuid())
+  eventId          String      @map("event_id")
+  participantName  String      @map("participant_name")
+  participantEmail String?     @map("participant_email")
+  userInitials     String      @map("user_initials")
+  paintMode        PaintMode   @map("paint_mode") @default(AVAILABLE)
+  timezone         String      @default("UTC+8")
+  availableSlots   Json        @map("available_slots") @default("[]")
+  createdAt        DateTime    @default(now()) @map("created_at")
+  updatedAt        DateTime    @updatedAt @map("updated_at")
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, participantName])
+  @@map("event_responses")
+}
+
+enum EventType {
+  GROUP      @map("group")
+  ONE_ON_ONE @map("one-on-one")
+}
+
+enum PaintMode {
+  AVAILABLE   @map("available")
+  UNAVAILABLE @map("unavailable")
+} 

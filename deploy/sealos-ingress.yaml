@@ -1,0 +1,94 @@
+# 主要 Ingress - timee.group
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: timee-main-ingress
+  namespace: timee-production
+  annotations:
+    # SSL 配置
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    # Nginx 配置
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    # CORS 配置
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://timee.group,https://www.timee.group"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, PATCH, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization"
+    # WebSocket 配置
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    # 文件上传大小限制
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    # Rate limiting
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+  labels:
+    app: timee
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - timee.group
+    - www.timee.group
+    secretName: timee-tls-cert
+  rules:
+  # 主域名 - timee.group
+  - host: timee.group
+    http:
+      paths:
+      # API 路由到后端
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: timee-api
+            port:
+              number: 3000
+      # WebSocket 路由到后端
+      - path: /socket.io
+        pathType: Prefix
+        backend:
+          service:
+            name: timee-api
+            port:
+              number: 3000
+      # 其他所有路由到前端
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: timee-frontend
+            port:
+              number: 80
+  # www 重定向到主域名
+  - host: www.timee.group
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: timee-frontend
+            port:
+              number: 80
+---
+# SSL 证书颁发器
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    # ACME 服务器 URL
+    server: https://acme-v02.api.letsencrypt.org/directory
+    # 邮箱地址，用于接收证书到期通知
+    email: admin@timee.group
+    # 私钥存储
+    privateKeySecretRef:
+      name: letsencrypt-prod
+    # 使用 HTTP-01 challenge
+    solvers:
+    - http01:
+        ingress:
+          class: nginx 

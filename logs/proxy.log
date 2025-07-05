@@ -1,0 +1,27 @@
+
+> timee-proxy@1.0.0 start
+> node proxy-server.js
+
+[HPM] Proxy created: /  -> http://localhost:3000
+[HPM] Proxy created: /  -> http://localhost:3000/api/health
+[HPM] Proxy created: /  -> http://localhost:5173
+node:events:496
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use 0.0.0.0:8080
+    at Server.setupListenHandle [as _listen2] (node:net:1907:16)
+    at listenInCluster (node:net:1964:12)
+    at node:net:2170:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1943:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -98,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 8080
+}
+
+Node.js v22.11.0

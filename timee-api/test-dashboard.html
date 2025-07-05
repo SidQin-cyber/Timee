@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timee API 测试面板</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; 
+            padding: 2rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        .status { 
+            display: flex; 
+            gap: 1rem; 
+            margin-bottom: 2rem; 
+            flex-wrap: wrap;
+        }
+        .status-card { 
+            flex: 1; 
+            min-width: 250px;
+            background: white; 
+            padding: 1.5rem; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-left: 4px solid #667eea;
+        }
+        .status-ok { border-left-color: #10b981; }
+        .status-error { border-left-color: #ef4444; }
+        .api-test { 
+            background: white; 
+            padding: 2rem; 
+            border-radius: 8px; 
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .endpoint { 
+            margin-bottom: 1.5rem; 
+            padding: 1rem; 
+            border: 1px solid #e5e7eb; 
+            border-radius: 6px;
+            background: #f9fafb;
+        }
+        .method { 
+            display: inline-block; 
+            padding: 0.25rem 0.75rem; 
+            border-radius: 4px; 
+            font-weight: bold; 
+            font-size: 0.875rem;
+            margin-right: 1rem;
+        }
+        .get { background: #10b981; color: white; }
+        .post { background: #3b82f6; color: white; }
+        .patch { background: #f59e0b; color: white; }
+        .delete { background: #ef4444; color: white; }
+        button { 
+            background: #667eea; 
+            color: white; 
+            border: none; 
+            padding: 0.75rem 1.5rem; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        button:hover { background: #5a67d8; transform: translateY(-1px); }
+        .result { 
+            margin-top: 1rem; 
+            padding: 1rem; 
+            background: #1f2937; 
+            color: #e5e7eb; 
+            border-radius: 6px; 
+            font-family: 'Monaco', 'Menlo', monospace; 
+            font-size: 0.875rem;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        .loading { color: #f59e0b; }
+        .success { color: #10b981; }
+        .error { color: #ef4444; }
+        .instructions {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .instructions h3 { color: #92400e; margin-bottom: 1rem; }
+        .external-config {
+            background: #dbeafe;
+            border: 1px solid #3b82f6;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+        .external-config h3 { color: #1e40af; margin-bottom: 1rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Timee API 测试面板</h1>
+            <p>本地开发和测试工具</p>
+        </div>
+
+        <div class="instructions">
+            <h3>📝 使用说明</h3>
+            <p>这是一个本地API测试工具。点击下方按钮测试各个API端点的功能。</p>
+            <p><strong>当前API地址:</strong> <code>http://localhost:8080/api</code></p>
+        </div>
+
+        <div class="status">
+            <div class="status-card" id="api-status">
+                <h3>API 服务状态</h3>
+                <p id="api-status-text">检查中...</p>
+            </div>
+            <div class="status-card" id="db-status">
+                <h3>数据库连接</h3>
+                <p id="db-status-text">检查中...</p>
+            </div>
+            <div class="status-card" id="external-status">
+                <h3>外部访问</h3>
+                <p id="external-status-text">检查中...</p>
+            </div>
+        </div>
+
+        <div class="api-test">
+            <h2>API 端点测试</h2>
+            
+            <div class="endpoint">
+                <span class="method get">GET</span>
+                <strong>/api/health</strong> - 健康检查
+                <button onclick="testEndpoint('GET', '/api/health')">测试</button>
+                <div class="result" id="result-health" style="display: none;"></div>
+            </div>
+
+            <div class="endpoint">
+                <span class="method get">GET</span>
+                <strong>/api/events</strong> - 获取事件列表
+                <button onclick="testEndpoint('GET', '/api/events')">测试</button>
+                <div class="result" id="result-events" style="display: none;"></div>
+            </div>
+
+            <div class="endpoint">
+                <span class="method get">GET</span>
+                <strong>/api/events/test-event-1</strong> - 获取特定事件
+                <button onclick="testEndpoint('GET', '/api/events/test-event-1')">测试</button>
+                <div class="result" id="result-event-detail" style="display: none;"></div>
+            </div>
+
+            <div class="endpoint">
+                <span class="method post">POST</span>
+                <strong>/api/events</strong> - 创建新事件
+                <button onclick="createTestEvent()">创建测试事件</button>
+                <div class="result" id="result-create-event" style="display: none;"></div>
+            </div>
+
+            <div class="endpoint">
+                <span class="method get">GET</span>
+                <strong>/api/events/test-event-1/responses</strong> - 获取事件响应
+                <button onclick="testEndpoint('GET', '/api/events/test-event-1/responses')">测试</button>
+                <div class="result" id="result-responses" style="display: none;"></div>
+            </div>
+        </div>
+
+        <div class="external-config">
+            <h3>🌐 外部访问配置</h3>
+            <p>要让前端应用从外部访问API，需要在Sealos中配置端口映射：</p>
+            <ol>
+                <li>访问 <a href="https://cloud.sealos.io" target="_blank">Sealos控制台</a></li>
+                <li>进入DevBox管理，找到 'devbox-timee' 实例</li>
+                <li>配置端口映射：内部8080 → 外部8080</li>
+                <li>保存配置并重启实例</li>
+            </ol>
+            <p><strong>配置成功后，外部访问地址为:</strong> <code>http://wmxkwzbmhlj.sealoshzh.site/api</code></p>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080/api';
+        
+        // 检查服务状态
+        async function checkStatus() {
+            // API服务状态
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                if (response.ok) {
+                    document.getElementById('api-status').className = 'status-card status-ok';
+                    document.getElementById('api-status-text').textContent = '✅ 运行正常';
+                } else {
+                    throw new Error('API响应错误');
+                }
+            } catch (error) {
+                document.getElementById('api-status').className = 'status-card status-error';
+                document.getElementById('api-status-text').textContent = '❌ 连接失败';
+            }
+
+            // 数据库连接状态
+            try {
+                const response = await fetch(`${API_BASE}/events`);
+                if (response.ok) {
+                    document.getElementById('db-status').className = 'status-card status-ok';
+                    document.getElementById('db-status-text').textContent = '✅ 连接正常';
+                } else {
+                    throw new Error('数据库连接错误');
+                }
+            } catch (error) {
+                document.getElementById('db-status').className = 'status-card status-error';
+                document.getElementById('db-status-text').textContent = '❌ 连接失败';
+            }
+
+            // 外部访问状态
+            document.getElementById('external-status').className = 'status-card status-error';
+            document.getElementById('external-status-text').textContent = '❌ 需要配置';
+        }
+
+        // 测试API端点
+        async function testEndpoint(method, endpoint) {
+            const resultId = `result-${endpoint.replace(/[\/\-:]/g, '')}`;
+            const resultEl = document.getElementById(resultId) || 
+                            document.getElementById('result-' + endpoint.split('/').pop().replace(/[^a-z]/gi, ''));
+            
+            if (!resultEl) return;
+            
+            resultEl.style.display = 'block';
+            resultEl.innerHTML = '<span class="loading">请求中...</span>';
+            
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const data = await response.text();
+                let formattedData;
+                try {
+                    formattedData = JSON.stringify(JSON.parse(data), null, 2);
+                } catch {
+                    formattedData = data;
+                }
+                
+                resultEl.innerHTML = `<span class="success">✅ 状态: ${response.status}</span>\n${formattedData}`;
+            } catch (error) {
+                resultEl.innerHTML = `<span class="error">❌ 错误: ${error.message}</span>`;
+            }
+        }
+
+        // 创建测试事件
+        async function createTestEvent() {
+            const resultEl = document.getElementById('result-create-event');
+            resultEl.style.display = 'block';
+            resultEl.innerHTML = '<span class="loading">创建中...</span>';
+            
+            const eventData = {
+                id: `test-${Date.now()}`,
+                title: "API测试事件",
+                description: "通过测试面板创建的事件",
+                startDate: "2025-06-20",
+                endDate: "2025-06-22",
+                eventType: "GROUP",
+                includeTime: true
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE}/events`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(eventData)
+                });
+                
+                const data = await response.json();
+                resultEl.innerHTML = `<span class="success">✅ 创建成功 (${response.status})</span>\n${JSON.stringify(data, null, 2)}`;
+            } catch (error) {
+                resultEl.innerHTML = `<span class="error">❌ 创建失败: ${error.message}</span>`;
+            }
+        }
+
+        // 页面加载时检查状态
+        window.onload = checkStatus;
+    </script>
+</body>
+</html> 

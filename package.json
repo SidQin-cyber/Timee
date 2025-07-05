@@ -1,0 +1,22 @@
+{
+  "name": "timee-proxy",
+  "version": "1.0.0",
+  "description": "Proxy server for Timee application",
+  "main": "proxy-server.js",
+  "scripts": {
+    "start": "node proxy-server.js",
+    "dev": "nodemon proxy-server.js",
+    "start:all": "./start-production.sh",
+    "stop:all": "./stop-production.sh"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "http-proxy-middleware": "^2.0.6"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+} 

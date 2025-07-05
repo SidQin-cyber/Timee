@@ -1,0 +1,65 @@
+apiVersion: devbox.sealos.io/v1alpha1
+kind: DevBox
+metadata:
+  name: timee-backend
+  namespace: default
+spec:
+  resource:
+    cpu: 1000m
+    memory: 2Gi
+  runtimeRef:
+    name: nodejs
+  network:
+    type: NodePort
+    extraPorts:
+    - name: api
+      port: 3001
+      protocol: TCP
+      targetPort: 3001
+  squash: false
+  state: Running
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: timee-api-external
+  namespace: default
+spec:
+  type: NodePort
+  selector:
+    app: timee-backend
+  ports:
+  - name: api
+    port: 3001
+    targetPort: 3001
+    protocol: TCP
+  externalTrafficPolicy: Local
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: timee-api-ingress
+  namespace: default
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, PATCH, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "Content-Type, Authorization"
+spec:
+  tls:
+  - hosts:
+    - wmxkwzbmhlj.sealoshzh.site
+    secretName: timee-tls-secret
+  rules:
+  - host: wmxkwzbmhlj.sealoshzh.site
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: timee-api-external
+            port:
+              number: 3001 

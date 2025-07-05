@@ -1,0 +1,36 @@
+
+> timee-api@1.0.0 start:prod
+> node dist/main
+
+[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPrismaModule dependencies initialized[39m[38;5;3m +19ms[39m
+[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mServeStaticModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mEventsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mResponsesModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAppController {/api}:[39m[38;5;3m +6ms[39m
+[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api, GET} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/health, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/events, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/status, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mEventsController {/api/events}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/events, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/events, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/events/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/events/:id, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/events/:id, DELETE} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/events/:id/responses, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mResponsesController {/api/responses}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/responses, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/responses, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/responses/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/responses/:id, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/responses/:id, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/responses/event/:eventId, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +157ms[39m
+🚀 Server running on http://localhost:3000
+🌐 External access: http://wmxkwzbmhlj.sealoshzh.site/api
+📡 WebSocket server ready
+🔧 CORS enabled for: *

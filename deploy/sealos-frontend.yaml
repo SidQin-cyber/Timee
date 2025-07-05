@@ -1,0 +1,80 @@
+# 前端应用 Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: timee-frontend
+  namespace: timee-production
+  labels:
+    app: timee-frontend
+    component: frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: timee-frontend
+  template:
+    metadata:
+      labels:
+        app: timee-frontend
+        component: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: your-registry/timee-frontend:latest
+        ports:
+        - containerPort: 80
+          name: http
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: VITE_API_URL
+          value: "https://timee.group/api"
+        - name: VITE_WS_URL
+          value: "wss://timee.group"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 101  # nginx user
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+---
+# 前端应用 Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: timee-frontend
+  namespace: timee-production
+  labels:
+    app: timee-frontend
+    component: frontend
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+    name: http
+  selector:
+    app: timee-frontend 
