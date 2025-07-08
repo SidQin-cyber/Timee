@@ -1,0 +1,50 @@
+
+> timee-api@1.0.0 start
+> node dist/main
+
+[32m[Nest] 42620  - [39m07/05/2025, 4:48:43 AM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 42620  - [39m07/05/2025, 4:48:43 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPrismaModule dependencies initialized[39m[38;5;3m +18ms[39m
+[32m[Nest] 42620  - [39m07/05/2025, 4:48:43 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 42620  - [39m07/05/2025, 4:48:43 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 42620  - [39m07/05/2025, 4:48:43 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mServeStaticModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 42620  - [39m07/05/2025, 4:48:43 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 42620  - [39m07/05/2025, 4:48:43 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mEventsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 42620  - [39m07/05/2025, 4:48:43 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mResponsesModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 42620  - [39m07/05/2025, 4:48:43 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAppController {/api}:[39m[38;5;3m +5ms[39m
+[32m[Nest] 42620  - [39m07/05/2025, 4:48:43 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api, GET} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 42620  - [39m07/05/2025, 4:48:43 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/health, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42620  - [39m07/05/2025, 4:48:43 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/events, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42620  - [39m07/05/2025, 4:48:43 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/status, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42620  - [39m07/05/2025, 4:48:43 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mEventsController {/api/events}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 42620  - [39m07/05/2025, 4:48:43 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/events, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42620  - [39m07/05/2025, 4:48:43 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/events, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42620  - [39m07/05/2025, 4:48:43 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/events/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42620  - [39m07/05/2025, 4:48:43 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/events/:id, PATCH} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42620  - [39m07/05/2025, 4:48:43 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/events/:id, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42620  - [39m07/05/2025, 4:48:43 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/events/:id/responses, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42620  - [39m07/05/2025, 4:48:43 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mResponsesController {/api/responses}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 42620  - [39m07/05/2025, 4:48:43 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/responses, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42620  - [39m07/05/2025, 4:48:43 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/responses, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42620  - [39m07/05/2025, 4:48:43 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/responses/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42620  - [39m07/05/2025, 4:48:43 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/responses/:id, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42620  - [39m07/05/2025, 4:48:43 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/responses/:id, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42620  - [39m07/05/2025, 4:48:43 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/responses/event/:eventId, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42620  - [39m07/05/2025, 4:48:43 AM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +135ms[39m
+[31m[Nest] 42620  - [39m07/05/2025, 4:48:43 AM [31m  ERROR[39m [38;5;3m[NestApplication] [39m[31mError: listen EADDRINUSE: address already in use 0.0.0.0:8080[39m[38;5;3m +9ms[39m
+node:net:1907
+    const ex = new UVExceptionWithHostPort(err, 'listen', address, port);
+               ^
+
+Error: listen EADDRINUSE: address already in use 0.0.0.0:8080
+    at Server.setupListenHandle [as _listen2] (node:net:1907:16)
+    at listenInCluster (node:net:1964:12)
+    at node:net:2170:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -98,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 8080
+}
+
+Node.js v22.11.0

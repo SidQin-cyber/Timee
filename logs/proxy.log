@@ -3,7 +3,7 @@
 > node proxy-server.js
 
 [HPM] Proxy created: /  -> http://localhost:3000
-[HPM] Proxy created: /  -> http://localhost:3000/api/health
+[HPM] Proxy rewrite rule created: "^/api" ~> "/api"
 [HPM] Proxy created: /  -> http://localhost:5173
 node:events:496
       throw er; // Unhandled 'error' event

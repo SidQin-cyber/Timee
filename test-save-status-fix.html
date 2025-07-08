@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>保存状态修复测试</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+        }
+        .test-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .test-step {
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: white;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        .step-number {
+            display: inline-block;
+            width: 25px;
+            height: 25px;
+            background-color: #007bff;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 25px;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        .expected {
+            background-color: #e7f3ff;
+            border-left: 4px solid #007bff;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 0 5px 5px 0;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-saving { background-color: #007bff; }
+        .status-saved { background-color: #28a745; }
+        .status-error { background-color: #dc3545; }
+        .status-unsaved { background-color: #ffc107; }
+        .link-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            margin: 10px 10px 10px 0;
+        }
+        .link-button:hover {
+            background-color: #0056b3;
+        }
+        .api-test {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+            border: 1px solid #dee2e6;
+        }
+        .api-result {
+            background-color: #e9ecef;
+            padding: 10px;
+            border-radius: 3px;
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .warning { color: #ffc107; }
+        .info { color: #17a2b8; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 保存状态修复测试</h1>
+            <p>验证用户选择变化时保存状态的正确显示</p>
+            <div id="timestamp">测试时间: <span id="current-time"></span></div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">📋 测试概述</div>
+            <p><strong>问题描述：</strong>用户在已有保存数据的情况下，进行新的选择时，状态仍显示"未保存"而不是正确的"已保存"/"保存中"/"未保存"状态。</p>
+            <p><strong>修复内容：</strong>改进了 refreshUserResponses 函数中的状态比较逻辑，确保正确检测本地更改与服务器数据的差异。</p>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">🎯 测试事件</div>
+            <p><strong>测试事件：</strong>tc-365667 (Timee Area-228317)</p>
+            <p><strong>当前参与者：</strong>Sid, qinguodongdong (2人)</p>
+            <div class="api-test">
+                <button onclick="checkEventData()">🔍 检查事件数据</button>
+                <div id="event-data-result" class="api-result"></div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">🧪 测试步骤</div>
+            
+            <div class="test-step">
+                <span class="step-number">1</span>
+                <strong>打开事件页面</strong>
+                <p>以 qinguodongdong 用户身份进入事件页面</p>
+                <a href="http://localhost:5173/event/tc-365667" class="link-button" target="_blank">🔗 打开事件页面</a>
+                <div class="expected">
+                    <strong>预期结果：</strong>
+                    <ul>
+                        <li>页面正常加载，显示"2人参与"</li>
+                        <li>左侧显示 qinguodongdong 的已保存选择</li>
+                        <li>右侧显示团队热力图</li>
+                        <li>保存状态显示为"已保存"(绿色圆点)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="test-step">
+                <span class="step-number">2</span>
+                <strong>进行新的时间选择</strong>
+                <p>在左侧时间网格中添加或移除一些时间段</p>
+                <div class="expected">
+                    <strong>预期结果：</strong>
+                    <ul>
+                        <li>选择立即在左侧网格中显示</li>
+                        <li>保存状态立即变为"未保存"(橙色圆点)</li>
+                        <li>右侧热力图实时更新显示新的选择</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="test-step">
+                <span class="step-number">3</span>
+                <strong>观察自动保存过程</strong>
+                <p>等待300ms防抖延迟后的自动保存</p>
+                <div class="expected">
+                    <strong>预期结果：</strong>
+                    <ul>
+                        <li>300ms后状态变为"保存中..."(蓝色圆点)</li>
+                        <li>保存完成后状态变为"已保存"(绿色圆点)</li>
+                        <li>3秒后状态变为空闲状态</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="test-step">
+                <span class="step-number">4</span>
+                <strong>验证数据一致性</strong>
+                <p>刷新页面确认数据已正确保存</p>
+                <div class="expected">
+                    <strong>预期结果：</strong>
+                    <ul>
+                        <li>刷新后选择的时间段仍然显示</li>
+                        <li>参与者计数保持"2人参与"</li>
+                        <li>团队热力图显示正确的重合时间</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">🔍 状态指示器说明</div>
+            <div style="display: flex; flex-wrap: wrap; gap: 20px; margin-top: 15px;">
+                <div>
+                    <span class="status-indicator status-saved"></span>
+                    <strong>已保存</strong> - 数据已成功保存到服务器
+                </div>
+                <div>
+                    <span class="status-indicator status-saving"></span>
+                    <strong>保存中...</strong> - 正在向服务器提交数据
+                </div>
+                <div>
+                    <span class="status-indicator status-unsaved"></span>
+                    <strong>未保存</strong> - 有本地更改未保存到服务器
+                </div>
+                <div>
+                    <span class="status-indicator status-error"></span>
+                    <strong>保存失败</strong> - 保存过程中发生错误
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">🔄 实时监控</div>
+            <div class="api-test">
+                <button onclick="startMonitoring()">▶️ 开始监控</button>
+                <button onclick="stopMonitoring()">⏹️ 停止监控</button>
+                <div id="monitoring-result" class="api-result"></div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">📊 测试结果</div>
+            <div id="test-results">
+                <p>请按照上述步骤进行测试，并记录实际结果。</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 更新时间戳
+        function updateTimestamp() {
+            document.getElementById('current-time').textContent = new Date().toLocaleString('zh-CN');
+        }
+        updateTimestamp();
+        setInterval(updateTimestamp, 1000);
+
+        // 检查事件数据
+        async function checkEventData() {
+            const resultDiv = document.getElementById('event-data-result');
+            resultDiv.textContent = '正在检查事件数据...';
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/responses/event/tc-365667');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const result = {
+                        success: true,
+                        participantCount: data.length,
+                        participants: data.map(p => ({
+                            name: p.participantName,
+                            slotsCount: p.availableSlots.length,
+                            updatedAt: p.updatedAt
+                        }))
+                    };
+                    resultDiv.innerHTML = `<span class="success">✅ 事件数据检查成功</span>\n${JSON.stringify(result, null, 2)}`;
+                } else {
+                    resultDiv.innerHTML = `<span class="error">❌ 事件数据检查失败</span>\n${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ 网络错误</span>\n${error.message}`;
+            }
+        }
+
+        // 实时监控
+        let monitoringInterval;
+        
+        function startMonitoring() {
+            if (monitoringInterval) return;
+            
+            const resultDiv = document.getElementById('monitoring-result');
+            resultDiv.textContent = '开始监控事件数据变化...\n';
+            
+            monitoringInterval = setInterval(async () => {
+                try {
+                    const response = await fetch('http://localhost:3000/api/responses/event/tc-365667');
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        const timestamp = new Date().toLocaleTimeString();
+                        const summary = `[${timestamp}] 参与者: ${data.length}人, 最后更新: ${data.map(p => p.updatedAt).sort().pop()}`;
+                        resultDiv.textContent += summary + '\n';
+                        resultDiv.scrollTop = resultDiv.scrollHeight;
+                    }
+                } catch (error) {
+                    console.error('监控错误:', error);
+                }
+            }, 2000);
+        }
+        
+        function stopMonitoring() {
+            if (monitoringInterval) {
+                clearInterval(monitoringInterval);
+                monitoringInterval = null;
+                document.getElementById('monitoring-result').textContent += '\n监控已停止。';
+            }
+        }
+
+        // 页面卸载时停止监控
+        window.addEventListener('beforeunload', stopMonitoring);
+    </script>
+</body>
+</html> 

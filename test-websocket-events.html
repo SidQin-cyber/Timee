@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket 事件测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .status-online {
+            color: green;
+            font-weight: bold;
+        }
+        .status-offline {
+            color: red;
+            font-weight: bold;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .log-entry.success {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+        }
+        .log-entry.error {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+        }
+        .log-entry.info {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+        }
+        .log-section {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            background: #fff;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .stat-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 WebSocket 事件测试 - tc-538518</h1>
+        
+        <div>
+            <strong>连接状态:</strong> 
+            <span id="connection-status" class="status-offline">未连接</span>
+        </div>
+        
+        <div style="margin-top: 15px;">
+            <button class="btn" onclick="connectWebSocket()">连接 WebSocket</button>
+            <button class="btn" onclick="joinEventRoom()">加入事件房间</button>
+            <button class="btn" onclick="createTestResponse()">创建测试响应</button>
+            <button class="btn" onclick="clearLogs()">清除日志</button>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="messages-count">0</div>
+                <div class="stat-label">收到消息数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="response-events">0</div>
+                <div class="stat-label">响应事件</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="participant-events">0</div>
+                <div class="stat-label">参与者事件</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <h2>📝 实时日志</h2>
+        <div id="log-section" class="log-section"></div>
+    </div>
+
+    <script>
+        let socket = null;
+        let messageCount = 0;
+        let responseEventCount = 0;
+        let participantEventCount = 0;
+
+        const eventId = 'tc-538518';
+        const wsUrl = 'ws://localhost:3000';
+
+        function log(message, type = 'info') {
+            const logSection = document.getElementById('log-section');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logSection.appendChild(entry);
+            logSection.scrollTop = logSection.scrollHeight;
+        }
+
+        function updateStats() {
+            document.getElementById('messages-count').textContent = messageCount;
+            document.getElementById('response-events').textContent = responseEventCount;
+            document.getElementById('participant-events').textContent = participantEventCount;
+        }
+
+        function clearLogs() {
+            document.getElementById('log-section').innerHTML = '';
+            messageCount = 0;
+            responseEventCount = 0;
+            participantEventCount = 0;
+            updateStats();
+        }
+
+        function connectWebSocket() {
+            if (socket) {
+                log('关闭现有连接...', 'info');
+                socket.close();
+            }
+
+            try {
+                log('正在连接到 WebSocket...', 'info');
+                socket = new WebSocket(wsUrl);
+
+                socket.onopen = function() {
+                    log('WebSocket 连接成功！', 'success');
+                    document.getElementById('connection-status').textContent = '已连接';
+                    document.getElementById('connection-status').className = 'status-online';
+                };
+
+                socket.onmessage = function(event) {
+                    messageCount++;
+                    updateStats();
+                    
+                    try {
+                        const data = JSON.parse(event.data);
+                        log(`收到消息: ${JSON.stringify(data)}`, 'info');
+                        
+                        // 处理不同类型的消息
+                        if (data.type === 'response_created' || data.type === 'response_updated') {
+                            responseEventCount++;
+                            log(`响应事件: ${data.type}`, 'success');
+                        } else if (data.type === 'participants_updated') {
+                            participantEventCount++;
+                            log(`参与者更新: ${data.count || 0} 人`, 'success');
+                        }
+                        
+                        updateStats();
+                    } catch (error) {
+                        log(`解析消息失败: ${error.message}`, 'error');
+                    }
+                };
+
+                socket.onerror = function(error) {
+                    log('WebSocket 错误', 'error');
+                    document.getElementById('connection-status').textContent = '连接错误';
+                    document.getElementById('connection-status').className = 'status-offline';
+                };
+
+                socket.onclose = function() {
+                    log('WebSocket 连接关闭', 'error');
+                    document.getElementById('connection-status').textContent = '已断开';
+                    document.getElementById('connection-status').className = 'status-offline';
+                };
+
+            } catch (error) {
+                log(`连接失败: ${error.message}`, 'error');
+            }
+        }
+
+        function joinEventRoom() {
+            if (!socket || socket.readyState !== WebSocket.OPEN) {
+                log('WebSocket 未连接', 'error');
+                return;
+            }
+
+            try {
+                const message = {
+                    type: 'join-event',
+                    eventId: eventId
+                };
+                socket.send(JSON.stringify(message));
+                log(`发送加入房间消息: ${eventId}`, 'info');
+            } catch (error) {
+                log(`发送消息失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function createTestResponse() {
+            try {
+                log('创建测试响应...', 'info');
+                
+                const testUser = `测试用户${Math.floor(Math.random() * 1000)}`;
+                const responseData = {
+                    eventId: eventId,
+                    participantName: testUser,
+                    userInitials: testUser.substring(0, 2),
+                    paintMode: 'available',
+                    timezone: 'UTC+8',
+                    availableSlots: [
+                        { date: "7/7", time: "10:00", type: "available", dateIndex: 0, timeIndex: 4 },
+                        { date: "7/8", time: "15:00", type: "available", dateIndex: 1, timeIndex: 24 }
+                    ]
+                };
+
+                const response = await fetch('http://localhost:3000/api/responses', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(responseData)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    log(`成功创建测试响应: ${result.id}`, 'success');
+                } else {
+                    const error = await response.text();
+                    log(`创建响应失败: ${response.status} - ${error}`, 'error');
+                }
+            } catch (error) {
+                log(`创建响应异常: ${error.message}`, 'error');
+            }
+        }
+
+        // 页面加载时自动连接
+        window.onload = function() {
+            log('页面加载完成', 'info');
+            connectWebSocket();
+            setTimeout(() => {
+                if (socket && socket.readyState === WebSocket.OPEN) {
+                    joinEventRoom();
+                }
+            }, 1000);
+        };
+
+        // 页面关闭时清理
+        window.onbeforeunload = function() {
+            if (socket) {
+                socket.close();
+            }
+        };
+    </script>
+</body>
+</html> 

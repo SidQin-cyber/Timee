@@ -1,0 +1,48 @@
+# App Launchpad 配置文件
+# 用于部署 Timee 应用
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: timee-app-config
+data:
+  # 应用配置
+  app_name: "timee"
+  app_type: "web"
+  
+  # 容器配置
+  image: "timee-app:latest"
+  port: "8080"
+  
+  # 环境变量
+  NODE_ENV: "production"
+  DATABASE_URL: "postgresql://postgres:Qinguoqg123@timee-postgresql.ns-upg0e2qv.svc:5432/timee_db"
+  JWT_SECRET: "TQ9tZLylPmuJrSqfD4RmkJDUO+TtcjlpRckSuEjf9DM="
+  CORS_ORIGIN: "https://timee.group"
+  
+  # 资源配置
+  cpu_request: "500m"
+  memory_request: "1Gi"
+  cpu_limit: "1000m"
+  memory_limit: "2Gi"
+  
+  # 健康检查
+  health_check_path: "/health"
+  health_check_port: "8080"
+  
+  # 副本数量
+  replicas: 1
+  
+  # 启动命令
+  command: "/app/entrypoint-production.sh"
+  
+  # 暴露端口
+  service_port: 8080
+  target_port: 8080
+  
+  # 数据库配置
+  database_host: "timee-postgresql.ns-upg0e2qv.svc"
+  database_port: "5432"
+  database_name: "timee_db"
+  database_user: "postgres"
+  database_password: "Qinguoqg123" 

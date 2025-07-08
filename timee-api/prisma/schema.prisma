@@ -7,52 +7,102 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Event {
-  id            String   @id
-  title         String
-  description   String?
-  timezone      String   @default("UTC+8")
-  startDate     DateTime @map("start_date") @db.Date
-  endDate       DateTime @map("end_date") @db.Date
-  startTime     String   @map("start_time") @default("09:00")
-  endTime       String   @map("end_time") @default("17:00")
-  eventType     EventType @map("event_type") @default(GROUP)
-  includeTime   Boolean  @map("include_time") @default(false)
-  selectedDates String?  @map("selected_dates")
-  finalizedSlots String[] @map("finalized_slots")
-  createdBy     String?  @map("created_by")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+// 房间表 - 存储活动基本信息
+model Room {
+  id          String    @id @default(uuid()) @db.Uuid
+  shareId     String    @unique @map("share_id") @db.VarChar(12)     // 分享链接ID (nanoid)
+  tcCode      String    @unique @map("tc_code") @db.VarChar(6)       // T-Code 6位数字口令
+  title       String?   @map("title") @db.VarChar(255)
+  description String?   @map("description") @db.Text
+  timezone    String    @default("UTC") @map("timezone") @db.VarChar(100)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  responses EventResponse[]
+  // 关联关系
+  candidateSlots CandidateSlot[]
+  participants   Participant[]
+  selectedSlots  SelectedSlot[]
 
-  @@map("events")
+  @@map("rooms")
 }
 
-model EventResponse {
-  id               String      @id @default(cuid())
-  eventId          String      @map("event_id")
-  participantName  String      @map("participant_name")
-  participantEmail String?     @map("participant_email")
-  userInitials     String      @map("user_initials")
-  paintMode        PaintMode   @map("paint_mode") @default(AVAILABLE)
-  timezone         String      @default("UTC+8")
-  availableSlots   Json        @map("available_slots") @default("[]")
-  createdAt        DateTime    @default(now()) @map("created_at")
-  updatedAt        DateTime    @updatedAt @map("updated_at")
+// 候选时间段表 - 房间创建者定义的可选时间段
+model CandidateSlot {
+  id        String   @id @default(uuid()) @db.Uuid
+  roomId    String   @map("room_id") @db.Uuid
+  startTime DateTime @map("start_time") @db.Timestamptz(6)           // UTC时间
+  endTime   DateTime @map("end_time") @db.Timestamptz(6)             // UTC时间
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  // 关联关系
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
 
-  @@unique([eventId, participantName])
-  @@map("event_responses")
+  // 约束：同一房间内不能有重叠的时间段
+  @@unique([roomId, startTime])
+  @@map("candidate_slots")
 }
 
-enum EventType {
-  GROUP      @map("group")
-  ONE_ON_ONE @map("one-on-one")
+// 参与者表 - 存储参与者基本信息
+model Participant {
+  id        String   @id @default(uuid()) @db.Uuid
+  roomId    String   @map("room_id") @db.Uuid
+  name      String   @map("name") @db.VarChar(255)
+  email     String?  @map("email") @db.VarChar(255)
+  initials  String?  @map("initials") @db.VarChar(10)
+  timezone  String   @default("UTC") @map("timezone") @db.VarChar(100)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // 关联关系
+  room          Room           @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  selectedSlots SelectedSlot[]
+
+  // 约束：同一房间中用户名唯一
+  @@unique([roomId, name])
+  @@map("participants")
 }
 
-enum PaintMode {
-  AVAILABLE   @map("available")
-  UNAVAILABLE @map("unavailable")
+// 选中时间段表 - 参与者选择的可用时间段
+model SelectedSlot {
+  id            String   @id @default(uuid()) @db.Uuid
+  roomId        String   @map("room_id") @db.Uuid
+  participantId String   @map("participant_id") @db.Uuid
+  startTime     DateTime @map("start_time") @db.Timestamptz(6)       // UTC时间
+  endTime       DateTime @map("end_time") @db.Timestamptz(6)         // UTC时间
+  isAvailable   Boolean  @default(true) @map("is_available")         // true=可用, false=不可用
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // 关联关系
+  room        Room        @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  participant Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  // 约束：防止竞态条件，同一参与者同一时间段只能有一条记录
+  @@unique([participantId, startTime])
+  @@map("selected_slots")
+}
+
+
+
+// 保留原有的点赞功能（与新架构无关）
+model Like {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.VarChar(255)
+  target    String   @default("testimonials") @db.VarChar(100)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([userId, target])
+  @@map("likes")
+}
+
+model LikeStats {
+  id        String   @id @default(uuid()) @db.Uuid
+  target    String   @unique @default("testimonials") @db.VarChar(100)
+  count     Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("like_stats")
 } 

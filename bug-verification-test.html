@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug修复验证测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-header {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .controls {
+            margin: 15px 0;
+        }
+        .controls button {
+            margin: 5px;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        .btn-warning {
+            background: #ffc107;
+            color: black;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .status.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .status.testing {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .log-area {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+            font-family: monospace;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        .test-result.pass {
+            background: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        .test-result.fail {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        .test-result.pending {
+            background: #fff3cd;
+            border-color: #ffeaa7;
+            color: #856404;
+        }
+        .input-group {
+            margin: 10px 0;
+        }
+        .input-group label {
+            display: inline-block;
+            width: 120px;
+            font-weight: bold;
+        }
+        .input-group input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 200px;
+        }
+        .grid-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .time-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+            margin: 10px 0;
+        }
+        .time-slot {
+            width: 40px;
+            height: 30px;
+            border: 1px solid #ddd;
+            border-radius: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .time-slot:hover {
+            background: #e9ecef;
+        }
+        .time-slot.selected {
+            background: #007bff;
+            color: white;
+        }
+        .time-slot.heatmap-1 { background: rgba(0,123,255,0.2); }
+        .time-slot.heatmap-2 { background: rgba(0,123,255,0.4); }
+        .time-slot.heatmap-3 { background: rgba(0,123,255,0.6); }
+        .time-slot.heatmap-4 { background: rgba(0,123,255,0.8); }
+        .time-slot.heatmap-5 { background: rgba(0,123,255,1); color: white; }
+    </style>
+</head>
+<body>
+    <div class="test-header">🐛 Bug修复验证测试</div>
+    
+    <!-- 连接状态 -->
+    <div class="test-container">
+        <h3>连接状态</h3>
+        <div id="connectionStatus" class="status disconnected">未连接</div>
+        <div class="controls">
+            <button onclick="connect()" class="btn-primary">连接WebSocket</button>
+            <button onclick="disconnect()" class="btn-danger">断开连接</button>
+        </div>
+    </div>
+
+    <!-- 活动设置 -->
+    <div class="test-container">
+        <h3>活动设置</h3>
+        <div class="input-group">
+            <label>活动代码:</label>
+            <input type="text" id="tcCode" value="TEST02" placeholder="输入活动代码">
+            <button onclick="generateCode()" class="btn-warning">生成新代码</button>
+        </div>
+        <div class="input-group">
+            <label>用户名:</label>
+            <input type="text" id="userName" value="用户A" placeholder="输入用户名">
+        </div>
+        <div class="controls">
+            <button onclick="joinEvent()" class="btn-success">加入活动</button>
+            <button onclick="leaveEvent()" class="btn-danger">离开活动</button>
+        </div>
+    </div>
+
+    <!-- Bug测试区域 -->
+    <div class="test-container">
+        <h3>Bug测试</h3>
+        <div class="controls">
+            <button onclick="testBug1()" class="btn-primary">测试Bug #1 (实时同步)</button>
+            <button onclick="testBug2()" class="btn-primary">测试Bug #2 (状态恢复)</button>
+            <button onclick="runAllTests()" class="btn-success">运行所有测试</button>
+            <button onclick="clearResults()" class="btn-warning">清空结果</button>
+        </div>
+        <div id="testResults"></div>
+    </div>
+
+    <!-- 界面模拟 -->
+    <div class="test-container">
+        <h3>界面模拟</h3>
+        <div class="grid-container">
+            <div>
+                <h4>我的时间选择</h4>
+                <div class="time-grid" id="userTimeSlots"></div>
+                <div class="controls">
+                    <button onclick="saveSelection()" class="btn-success">保存选择</button>
+                    <button onclick="clearSelection()" class="btn-danger">清空选择</button>
+                </div>
+            </div>
+            <div>
+                <h4>团队热力图</h4>
+                <div class="time-grid" id="heatmapSlots"></div>
+                <div id="participantsList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 日志区域 -->
+    <div class="test-container">
+        <h3>实时日志</h3>
+        <div class="controls">
+            <button onclick="clearLog()" class="btn-warning">清空日志</button>
+        </div>
+        <div id="logArea" class="log-area"></div>
+    </div>
+
+    <script>
+        // 全局变量
+        let client = null;
+        let isConnected = false;
+        let currentEvent = null;
+        let currentUser = null;
+        let userSelection = new Set();
+        let testResults = {};
+
+        // 模拟WebSocket客户端
+        class SimpleWebSocketClient {
+            constructor() {
+                this.socket = null;
+                this.handlers = {};
+                this.isConnected = false;
+            }
+
+            async connect() {
+                try {
+                    // 动态导入socket.io
+                    const { io } = await import('https://cdn.socket.io/4.7.2/socket.io.esm.min.js');
+                    
+                    this.socket = io('http://localhost:3000', {
+                        transports: ['websocket', 'polling']
+                    });
+
+                    return new Promise((resolve, reject) => {
+                        this.socket.on('connect', () => {
+                            this.isConnected = true;
+                            log('WebSocket连接成功');
+                            resolve();
+                        });
+
+                        this.socket.on('connect_error', (error) => {
+                            log('连接错误: ' + error.message);
+                            reject(error);
+                        });
+
+                        this.socket.on('room-update', (data) => {
+                            log('收到房间更新: ' + JSON.stringify(data));
+                            if (this.handlers.roomUpdate) {
+                                this.handlers.roomUpdate(data);
+                            }
+                        });
+
+                        this.socket.on('response-updated', (data) => {
+                            log('收到响应更新: ' + JSON.stringify(data));
+                            if (this.handlers.responseUpdate) {
+                                this.handlers.responseUpdate(data);
+                            }
+                        });
+
+                        this.socket.on('user-joined', (data) => {
+                            log('用户加入: ' + JSON.stringify(data));
+                            if (this.handlers.userJoined) {
+                                this.handlers.userJoined(data);
+                            }
+                        });
+
+                        this.socket.on('user-left', (data) => {
+                            log('用户离开: ' + JSON.stringify(data));
+                            if (this.handlers.userLeft) {
+                                this.handlers.userLeft(data);
+                            }
+                        });
+                    });
+                } catch (error) {
+                    log('连接失败: ' + error.message);
+                    throw error;
+                }
+            }
+
+            disconnect() {
+                if (this.socket) {
+                    this.socket.disconnect();
+                    this.socket = null;
+                    this.isConnected = false;
+                    log('WebSocket连接已断开');
+                }
+            }
+
+            joinEvent(eventId, userName) {
+                if (!this.isConnected) {
+                    throw new Error('WebSocket未连接');
+                }
+                log(`加入活动: ${eventId}, 用户: ${userName}`);
+                this.socket.emit('join-event', { eventId, participantName: userName });
+            }
+
+            leaveEvent(eventId, userName) {
+                if (!this.isConnected) {
+                    return;
+                }
+                log(`离开活动: ${eventId}, 用户: ${userName}`);
+                this.socket.emit('leave-event', { eventId, participantName: userName });
+            }
+
+            on(event, handler) {
+                this.handlers[event] = handler;
+            }
+        }
+
+        // API函数
+        async function apiCall(method, endpoint, data = null) {
+            try {
+                const options = {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                };
+
+                if (data) {
+                    options.body = JSON.stringify(data);
+                }
+
+                const response = await fetch(`http://localhost:3000/api${endpoint}`, options);
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.message || `HTTP ${response.status}`);
+                }
+
+                return result;
+            } catch (error) {
+                log(`API调用失败: ${error.message}`);
+                throw error;
+            }
+        }
+
+        // 连接WebSocket
+        async function connect() {
+            try {
+                updateStatus('testing', '正在连接...');
+                client = new SimpleWebSocketClient();
+                
+                client.on('roomUpdate', (data) => {
+                    updateHeatmap(data.heatmap);
+                    updateParticipants(data.participants);
+                    updateTestResult('realtime-sync', true, '实时同步正常工作');
+                });
+
+                client.on('responseUpdate', (data) => {
+                    updateHeatmap(data.heatmap);
+                    updateTestResult('response-sync', true, '响应同步正常');
+                });
+
+                await client.connect();
+                isConnected = true;
+                updateStatus('connected', '已连接');
+                
+            } catch (error) {
+                updateStatus('disconnected', '连接失败: ' + error.message);
+            }
+        }
+
+        // 断开连接
+        function disconnect() {
+            if (client) {
+                client.disconnect();
+                client = null;
+            }
+            isConnected = false;
+            currentEvent = null;
+            currentUser = null;
+            updateStatus('disconnected', '已断开连接');
+        }
+
+        // 生成活动代码
+        async function generateCode() {
+            try {
+                const result = await apiCall('GET', '/events/generate/tc-code');
+                document.getElementById('tcCode').value = result.data.tcCode;
+                log(`生成新代码: ${result.data.tcCode}`);
+            } catch (error) {
+                log(`生成代码失败: ${error.message}`);
+            }
+        }
+
+        // 加入活动
+        async function joinEvent() {
+            try {
+                if (!isConnected) {
+                    log('请先连接WebSocket');
+                    return;
+                }
+
+                const tcCode = document.getElementById('tcCode').value;
+                const userName = document.getElementById('userName').value;
+
+                if (!tcCode || !userName) {
+                    log('请输入活动代码和用户名');
+                    return;
+                }
+
+                // 获取活动信息
+                const eventResult = await apiCall('GET', `/events/tc/${tcCode}`);
+                currentEvent = eventResult.data;
+                currentUser = userName;
+
+                // 加入WebSocket房间
+                client.joinEvent(currentEvent.id, userName);
+
+                // 获取房间数据
+                const roomResult = await apiCall('GET', `/responses/room/${currentEvent.id}`);
+                updateHeatmap(roomResult.data.heatmap);
+                updateParticipants(roomResult.data.participants);
+
+                log(`成功加入活动: ${tcCode}`);
+                updateTestResult('join-event', true, '成功加入活动');
+
+            } catch (error) {
+                log(`加入活动失败: ${error.message}`);
+                updateTestResult('join-event', false, '加入活动失败');
+            }
+        }
+
+        // 离开活动
+        function leaveEvent() {
+            if (client && currentEvent && currentUser) {
+                client.leaveEvent(currentEvent.id, currentUser);
+            }
+            currentEvent = null;
+            currentUser = null;
+            clearHeatmap();
+            clearParticipants();
+            log('已离开活动');
+        }
+
+        // 保存选择
+        async function saveSelection() {
+            try {
+                if (!currentEvent || !currentUser) {
+                    log('请先加入活动');
+                    return;
+                }
+
+                const availability = Array.from(userSelection).map(slotId => {
+                    const [day, hour] = slotId.split('-').map(Number);
+                    return { day, hour, available: true };
+                });
+
+                const result = await apiCall('POST', '/responses', {
+                    eventId: currentEvent.id,
+                    participantName: currentUser,
+                    availability: availability,
+                    paintMode: 'individual'
+                });
+
+                log('选择保存成功');
+                updateTestResult('save-response', true, '响应保存成功');
+
+            } catch (error) {
+                log(`保存失败: ${error.message}`);
+                updateTestResult('save-response', false, '保存失败');
+            }
+        }
+
+        // 清空选择
+        function clearSelection() {
+            userSelection.clear();
+            document.querySelectorAll('#userTimeSlots .time-slot').forEach(slot => {
+                slot.classList.remove('selected');
+            });
+            log('选择已清空');
+        }
+
+        // 测试Bug #1
+        async function testBug1() {
+            log('=== 开始测试Bug #1: 实时同步 ===');
+            updateTestResult('bug1-test', 'pending', '测试进行中...');
+
+            try {
+                // 确保已连接和加入活动
+                if (!isConnected || !currentEvent) {
+                    throw new Error('请先连接并加入活动');
+                }
+
+                // 清空当前选择
+                clearSelection();
+
+                // 选择一个时间段
+                const testSlot = '0-0';
+                userSelection.add(testSlot);
+                document.getElementById(`user-${testSlot}`).classList.add('selected');
+
+                // 保存选择
+                await saveSelection();
+
+                // 等待实时同步
+                let syncReceived = false;
+                const originalRoomUpdate = client.handlers.roomUpdate;
+                
+                client.on('roomUpdate', (data) => {
+                    syncReceived = true;
+                    if (originalRoomUpdate) originalRoomUpdate(data);
+                });
+
+                // 等待2秒检查同步
+                setTimeout(() => {
+                    if (syncReceived || testResults['realtime-sync']) {
+                        updateTestResult('bug1-test', true, '✅ Bug #1 已修复 - 实时同步正常');
+                        log('Bug #1 测试通过');
+                    } else {
+                        updateTestResult('bug1-test', false, '❌ Bug #1 仍存在 - 实时同步失败');
+                        log('Bug #1 测试失败');
+                    }
+                }, 2000);
+
+            } catch (error) {
+                updateTestResult('bug1-test', false, `Bug #1 测试失败: ${error.message}`);
+                log(`Bug #1 测试错误: ${error.message}`);
+            }
+        }
+
+        // 测试Bug #2
+        async function testBug2() {
+            log('=== 开始测试Bug #2: 状态恢复 ===');
+            updateTestResult('bug2-test', 'pending', '测试进行中...');
+
+            try {
+                // 确保已连接和加入活动
+                if (!isConnected || !currentEvent) {
+                    throw new Error('请先连接并加入活动');
+                }
+
+                // 保存一些选择
+                userSelection.add('1-1');
+                userSelection.add('2-2');
+                await saveSelection();
+
+                // 模拟页面刷新 - 清空本地状态
+                const savedEvent = currentEvent;
+                const savedUser = currentUser;
+                
+                clearSelection();
+                clearHeatmap();
+                
+                log('模拟页面刷新...');
+
+                // 等待一下再恢复状态
+                setTimeout(async () => {
+                    try {
+                        // 重新获取用户响应
+                        const userResult = await apiCall('GET', `/responses/user/${savedEvent.id}/${savedUser}`);
+                        
+                        if (userResult.data && userResult.data.availability) {
+                            // 恢复用户选择
+                            userSelection.clear();
+                            userResult.data.availability.forEach(slot => {
+                                if (slot.available) {
+                                    const slotId = `${slot.day}-${slot.hour}`;
+                                    userSelection.add(slotId);
+                                    const element = document.getElementById(`user-${slotId}`);
+                                    if (element) {
+                                        element.classList.add('selected');
+                                    }
+                                }
+                            });
+
+                            // 重新获取房间数据
+                            const roomResult = await apiCall('GET', `/responses/room/${savedEvent.id}`);
+                            updateHeatmap(roomResult.data.heatmap);
+                            updateParticipants(roomResult.data.participants);
+
+                            updateTestResult('bug2-test', true, '✅ Bug #2 已修复 - 状态恢复正常');
+                            log('Bug #2 测试通过 - 状态恢复成功');
+                        } else {
+                            updateTestResult('bug2-test', false, '❌ Bug #2 仍存在 - 无法恢复状态');
+                            log('Bug #2 测试失败 - 状态恢复失败');
+                        }
+                    } catch (error) {
+                        updateTestResult('bug2-test', false, `Bug #2 测试失败: ${error.message}`);
+                        log(`Bug #2 测试错误: ${error.message}`);
+                    }
+                }, 1000);
+
+            } catch (error) {
+                updateTestResult('bug2-test', false, `Bug #2 测试失败: ${error.message}`);
+                log(`Bug #2 测试错误: ${error.message}`);
+            }
+        }
+
+        // 运行所有测试
+        async function runAllTests() {
+            log('=== 开始运行所有测试 ===');
+            
+            // 清空之前的结果
+            testResults = {};
+            
+            // 按顺序运行测试
+            await testBug1();
+            
+            setTimeout(async () => {
+                await testBug2();
+                
+                setTimeout(() => {
+                    log('=== 所有测试完成 ===');
+                    showTestSummary();
+                }, 3000);
+            }, 3000);
+        }
+
+        // 显示测试摘要
+        function showTestSummary() {
+            const passed = Object.values(testResults).filter(r => r === true).length;
+            const total = Object.keys(testResults).length;
+            
+            log(`测试摘要: ${passed}/${total} 项测试通过`);
+            
+            if (passed === total) {
+                log('🎉 所有测试通过！Bug已修复！');
+            } else {
+                log('⚠️ 部分测试失败，需要进一步检查');
+            }
+        }
+
+        // 初始化时间网格
+        function initializeTimeSlots() {
+            const days = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+            const hours = ['09', '10', '11', '14', '15', '16', '17'];
+            
+            const userSlots = document.getElementById('userTimeSlots');
+            const heatmapSlots = document.getElementById('heatmapSlots');
+            
+            userSlots.innerHTML = '';
+            heatmapSlots.innerHTML = '';
+            
+            days.forEach((day, dayIndex) => {
+                hours.forEach((hour, hourIndex) => {
+                    const slotId = `${dayIndex}-${hourIndex}`;
+                    
+                    // 用户选择区域
+                    const userSlot = document.createElement('div');
+                    userSlot.className = 'time-slot';
+                    userSlot.id = `user-${slotId}`;
+                    userSlot.textContent = hour;
+                    userSlot.title = `${day} ${hour}:00`;
+                    userSlot.onclick = () => {
+                        if (userSelection.has(slotId)) {
+                            userSelection.delete(slotId);
+                            userSlot.classList.remove('selected');
+                        } else {
+                            userSelection.add(slotId);
+                            userSlot.classList.add('selected');
+                        }
+                    };
+                    userSlots.appendChild(userSlot);
+                    
+                    // 热力图区域
+                    const heatmapSlot = document.createElement('div');
+                    heatmapSlot.className = 'time-slot';
+                    heatmapSlot.id = `heatmap-${slotId}`;
+                    heatmapSlot.textContent = hour;
+                    heatmapSlot.title = `${day} ${hour}:00`;
+                    heatmapSlots.appendChild(heatmapSlot);
+                });
+            });
+        }
+
+        // 更新热力图
+        function updateHeatmap(heatmapData) {
+            if (!heatmapData) return;
+            
+            // 清除现有样式
+            clearHeatmap();
+            
+            heatmapData.forEach(slot => {
+                const slotId = `${slot.day}-${slot.hour}`;
+                const element = document.getElementById(`heatmap-${slotId}`);
+                if (element && slot.count > 0) {
+                    const level = Math.min(5, slot.count);
+                    element.classList.add(`heatmap-${level}`);
+                    element.title = `${element.title} - ${slot.count} 人`;
+                }
+            });
+            
+            log(`热力图更新: ${heatmapData.length} 个时间段`);
+        }
+
+        // 清空热力图
+        function clearHeatmap() {
+            document.querySelectorAll('#heatmapSlots .time-slot').forEach(slot => {
+                slot.className = 'time-slot';
+            });
+        }
+
+        // 更新参与者列表
+        function updateParticipants(participants) {
+            const container = document.getElementById('participantsList');
+            
+            if (!participants || participants.length === 0) {
+                container.innerHTML = '<div>暂无参与者</div>';
+                return;
+            }
+            
+            container.innerHTML = '<h5>参与者:</h5>' + 
+                participants.map(p => `<div>${p.name} (${p.hasResponse ? '已响应' : '未响应'})</div>`).join('');
+        }
+
+        // 清空参与者
+        function clearParticipants() {
+            document.getElementById('participantsList').innerHTML = '';
+        }
+
+        // 更新状态
+        function updateStatus(status, message) {
+            const statusDiv = document.getElementById('connectionStatus');
+            statusDiv.className = `status ${status}`;
+            statusDiv.textContent = message;
+        }
+
+        // 更新测试结果
+        function updateTestResult(testId, status, message) {
+            testResults[testId] = status;
+            
+            const container = document.getElementById('testResults');
+            const existing = document.getElementById(`test-${testId}`);
+            
+            const statusClass = status === true ? 'pass' : status === false ? 'fail' : 'pending';
+            const statusIcon = status === true ? '✅' : status === false ? '❌' : '⏳';
+            
+            const html = `
+                <div class="test-result ${statusClass}" id="test-${testId}">
+                    <strong>${statusIcon} ${testId}</strong>: ${message}
+                </div>
+            `;
+            
+            if (existing) {
+                existing.outerHTML = html;
+            } else {
+                container.insertAdjacentHTML('beforeend', html);
+            }
+        }
+
+        // 清空测试结果
+        function clearResults() {
+            document.getElementById('testResults').innerHTML = '';
+            testResults = {};
+            log('测试结果已清空');
+        }
+
+        // 日志函数
+        function log(message) {
+            const logArea = document.getElementById('logArea');
+            const timestamp = new Date().toLocaleTimeString();
+            logArea.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            logArea.scrollTop = logArea.scrollHeight;
+        }
+
+        // 清空日志
+        function clearLog() {
+            document.getElementById('logArea').innerHTML = '';
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeTimeSlots();
+            log('页面加载完成，准备开始测试');
+        });
+
+        // 页面卸载时清理
+        window.addEventListener('beforeunload', function() {
+            disconnect();
+        });
+    </script>
+</body>
+</html> 

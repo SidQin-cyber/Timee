@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>实时同步修复验证 - Timee Debug</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2563eb;
+            border-bottom: 3px solid #dbeafe;
+            padding-bottom: 10px;
+        }
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            background: #f9fafb;
+        }
+        .test-section h2 {
+            color: #1f2937;
+            margin-top: 0;
+        }
+        .bug-description {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .bug-description h3 {
+            color: #dc2626;
+            margin-top: 0;
+        }
+        .fix-description {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .fix-description h3 {
+            color: #16a34a;
+            margin-top: 0;
+        }
+        .test-steps {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .test-steps h3 {
+            color: #2563eb;
+            margin-top: 0;
+        }
+        .test-steps ol {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .test-steps li {
+            margin: 8px 0;
+            line-height: 1.6;
+        }
+        .api-test {
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+        }
+        .status {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            display: inline-block;
+            margin: 5px;
+        }
+        .status.success { background: #dcfce7; color: #166534; }
+        .status.error { background: #fef2f2; color: #dc2626; }
+        .status.warning { background: #fef3c7; color: #92400e; }
+        .status.info { background: #dbeafe; color: #1d4ed8; }
+        .links {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f1f5f9;
+            border-radius: 6px;
+        }
+        .links a {
+            display: inline-block;
+            margin: 5px 10px 5px 0;
+            padding: 8px 16px;
+            background: #3b82f6;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        .links a:hover {
+            background: #2563eb;
+        }
+        .code-block {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        .highlight {
+            background: #fef3c7;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 实时同步修复验证 - Timee Debug</h1>
+        
+        <div class="links">
+            <strong>快速链接：</strong>
+            <a href="http://localhost:8080/tc-realtime-test" target="_blank">测试活动页面</a>
+            <a href="http://localhost:8080/tc-realtime-test?debug=1" target="_blank">调试模式</a>
+            <a href="http://localhost:3000/api/events/tc-realtime-test" target="_blank">API数据</a>
+        </div>
+
+        <!-- Bug #1: 双用户实时同步失败 -->
+        <div class="test-section">
+            <h2>🐛 Bug #1: 双用户实时同步失败</h2>
+            
+            <div class="bug-description">
+                <h3>问题描述</h3>
+                <p><strong>场景：</strong>房间里恰好有两个用户（用户A和用户B）</p>
+                <p><strong>操作：</strong>用户A在左侧选择时间段，数据成功提交到服务器</p>
+                <p><strong>错误表现：</strong></p>
+                <ul>
+                    <li>用户A自己的右侧热力图正确更新</li>
+                    <li>用户B的界面没有任何变化，右侧热力图依然空白</li>
+                    <li>只有当用户A退出或第三人加入时，用户B才能看到更新</li>
+                </ul>
+            </div>
+
+            <div class="fix-description">
+                <h3>修复方案</h3>
+                <p><strong>根本原因：</strong>WebSocket事件处理不一致</p>
+                <ul>
+                    <li><span class="highlight">response-created/updated</span> 事件调用 <code>refreshUserResponses()</code> 但没有触发UI更新</li>
+                    <li><span class="highlight">participants-updated</span> 事件直接调用 <code>set()</code> 触发React重新渲染</li>
+                </ul>
+                <p><strong>修复方法：</strong>让 <code>refreshUserResponses()</code> 直接更新状态并重新计算热力图</p>
+            </div>
+
+            <div class="test-steps">
+                <h3>测试步骤</h3>
+                <ol>
+                    <li>打开两个浏览器窗口（或无痕模式）</li>
+                    <li>都访问: <code>http://localhost:8080/tc-realtime-test</code></li>
+                    <li>第一个窗口以 <strong>"用户A"</strong> 身份登录</li>
+                    <li>第二个窗口以 <strong>"用户B"</strong> 身份登录</li>
+                    <li>在用户A的左侧时间网格中选择一个时间段</li>
+                    <li>观察用户B的右侧热力图是否<strong>立即更新</strong></li>
+                    <li>✅ 修复成功：用户B应该在1秒内看到热力图更新</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Bug #2: 数据恢复和UI损坏 -->
+        <div class="test-section">
+            <h2>🐛 Bug #2: 数据恢复和UI损坏</h2>
+            
+            <div class="bug-description">
+                <h3>问题描述</h3>
+                <p><strong>场景：</strong>用户选择时间后刷新页面或重新进入</p>
+                <p><strong>错误表现：</strong></p>
+                <ul>
+                    <li>右侧热力图正确显示聚合数据</li>
+                    <li>左侧"我的可用时间"编辑区是空白的（数据未恢复）</li>
+                    <li>在空白的左侧进行任何操作后，右侧热力图损坏，显示"全选"状态</li>
+                </ul>
+            </div>
+
+            <div class="fix-description">
+                <h3>修复方案</h3>
+                <p><strong>根本原因：</strong>数据恢复时序问题</p>
+                <ul>
+                    <li><code>initCurrentUser</code> 恢复了 <code>localSelection</code> 但UI组件未同步</li>
+                    <li><code>timeGrid.syncWithExternalData</code> 依赖数据可能在初始化时未准备好</li>
+                </ul>
+                <p><strong>修复方法：</strong></p>
+                <ul>
+                    <li>添加延迟同步机制，确保UI组件完全初始化</li>
+                    <li>增强数据恢复的时序控制</li>
+                    <li>添加额外的同步触发器</li>
+                </ul>
+            </div>
+
+            <div class="test-steps">
+                <h3>测试步骤</h3>
+                <ol>
+                    <li>访问: <code>http://localhost:8080/tc-realtime-test</code></li>
+                    <li>以任意用户名登录（如 <strong>"测试用户"</strong>）</li>
+                    <li>在左侧时间网格中选择几个时间段</li>
+                    <li>等待数据自动保存（300ms后）</li>
+                    <li>刷新页面（F5）</li>
+                    <li>重新以相同用户名登录</li>
+                    <li>✅ 修复成功检查：
+                        <ul>
+                            <li>左侧编辑区应该显示之前选择的时间段</li>
+                            <li>右侧热力图应该正确显示聚合数据</li>
+                            <li>在左侧进行新的操作不应该导致右侧显示"全选"</li>
+                        </ul>
+                    </li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- API测试 -->
+        <div class="test-section">
+            <h2>🔍 API和数据验证</h2>
+            
+            <div class="api-test">
+                <h3>检查后端数据</h3>
+                <p>curl http://localhost:3000/api/events/tc-realtime-test/responses</p>
+                <p>curl http://localhost:3000/api/events/tc-realtime-test</p>
+            </div>
+
+            <div class="test-steps">
+                <h3>验证步骤</h3>
+                <ol>
+                    <li>在浏览器中访问: <code>http://localhost:3000/api/events/tc-realtime-test/responses</code></li>
+                    <li>检查是否能看到用户的选择数据</li>
+                    <li>验证数据格式是否正确</li>
+                    <li>确认WebSocket连接状态（在浏览器控制台查看）</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- 修复代码摘要 -->
+        <div class="test-section">
+            <h2>🛠️ 修复代码摘要</h2>
+            
+            <div class="fix-description">
+                <h3>修复点1: refreshUserResponses函数</h3>
+                <div class="code-block">
+// 修复前：只更新数据，不触发UI更新
+set({ userResponses })
+get().calculateHeatmap()
+
+// 修复后：直接更新状态，确保触发React重新渲染
+const heatmapData = calculateHeatmapData(userResponses, currentEvent)
+set({ 
+  userResponses, 
+  heatmapData,
+  lastDataFetch: Date.now() 
+})
+                </div>
+            </div>
+
+            <div class="fix-description">
+                <h3>修复点2: initCurrentUser函数</h3>
+                <div class="code-block">
+// 新增：延迟同步机制
+if (existingUserResponse && existingUserResponse.availability.length > 0) {
+  setTimeout(() => {
+    const { currentUser: latestUser } = get()
+    if (latestUser && latestUser.localSelection.length > 0) {
+      get().updateLocalSelection(latestUser.localSelection, latestUser.paintMode)
+    }
+  }, 200) // 确保UI组件完全初始化
+}
+                </div>
+            </div>
+
+            <div class="fix-description">
+                <h3>修复点3: EventPage额外同步</h3>
+                <div class="code-block">
+// 新增：额外的数据恢复同步机制
+useEffect(() => {
+  if (currentUser && currentUser.localSelection.length > 0 && currentEvent?.includeTime) {
+    setTimeout(() => {
+      timeGrid.syncWithExternalData(currentUser.localSelection)
+    }, 100)
+  }
+}, [currentUser?.userName, currentUser?.localSelection?.length, currentEvent?.includeTime])
+                </div>
+            </div>
+        </div>
+
+        <!-- 预期结果 -->
+        <div class="test-section">
+            <h2>✅ 预期修复结果</h2>
+            
+            <div class="status success">Bug #1 修复：双用户实时同步正常</div>
+            <div class="status success">Bug #2 修复：数据恢复和UI一致性</div>
+            
+            <ul>
+                <li>✅ 两个用户在同一房间时，选择操作能立即同步</li>
+                <li>✅ 刷新页面后，左侧编辑区正确恢复之前的选择</li>
+                <li>✅ 数据恢复后进行新操作不会导致UI损坏</li>
+                <li>✅ 热力图计算准确，不会出现"全选"错误</li>
+                <li>✅ WebSocket事件处理一致，UI更新及时</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h2>🎯 关键测试场景</h2>
+            
+            <div class="test-steps">
+                <h3>场景1: 双用户实时同步</h3>
+                <ol>
+                    <li>两个浏览器窗口，不同用户名</li>
+                    <li>用户A选择时间，用户B立即看到更新</li>
+                    <li>用户B选择时间，用户A立即看到更新</li>
+                    <li>验证热力图计算正确</li>
+                </ol>
+            </div>
+
+            <div class="test-steps">
+                <h3>场景2: 数据恢复测试</h3>
+                <ol>
+                    <li>用户选择时间段并保存</li>
+                    <li>刷新页面</li>
+                    <li>重新登录相同用户名</li>
+                    <li>验证左侧编辑区正确恢复</li>
+                    <li>进行新的选择操作</li>
+                    <li>验证右侧热力图不会损坏</li>
+                </ol>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // 自动检查系统状态
+        async function checkSystemStatus() {
+            const statusElements = document.querySelectorAll('.status');
+            
+            try {
+                // 检查前端
+                const frontendResponse = await fetch('http://localhost:8080/');
+                if (frontendResponse.ok) {
+                    console.log('✅ 前端服务正常');
+                }
+                
+                // 检查后端API
+                const backendResponse = await fetch('http://localhost:3000/api/events/tc-realtime-test');
+                if (backendResponse.ok) {
+                    console.log('✅ 后端API正常');
+                }
+                
+                // 检查测试活动
+                const eventData = await backendResponse.json();
+                console.log('📊 测试活动数据:', eventData);
+                
+            } catch (error) {
+                console.error('❌ 系统检查失败:', error);
+            }
+        }
+        
+        // 页面加载时检查
+        document.addEventListener('DOMContentLoaded', checkSystemStatus);
+        
+        // 添加快捷键支持
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'r') {
+                e.preventDefault();
+                location.reload();
+            }
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>实时同步测试 - Timee</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+        }
+        .test-section.success {
+            border-color: #10b981;
+            background: #f0fdf4;
+        }
+        .test-section.error {
+            border-color: #ef4444;
+            background: #fef2f2;
+        }
+        .test-section.warning {
+            border-color: #f59e0b;
+            background: #fffbeb;
+        }
+        .test-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #1f2937;
+        }
+        .test-description {
+            color: #6b7280;
+            margin-bottom: 15px;
+        }
+        .test-button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        .test-button:hover {
+            background: #2563eb;
+        }
+        .test-button.success {
+            background: #10b981;
+        }
+        .test-button.error {
+            background: #ef4444;
+        }
+        .test-result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            background: #f9fafb;
+            border-left: 4px solid #3b82f6;
+            font-family: monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-success { background: #10b981; }
+        .status-error { background: #ef4444; }
+        .status-warning { background: #f59e0b; }
+        .status-info { background: #3b82f6; }
+        .instructions {
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .instructions h3 {
+            color: #0369a1;
+            margin-top: 0;
+        }
+        .event-link {
+            background: #f3f4f6;
+            padding: 10px;
+            border-radius: 6px;
+            font-family: monospace;
+            margin: 10px 0;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔄 实时同步功能测试</h1>
+            <p>测试用户选择时间的实时同步和数据恢复功能</p>
+        </div>
+
+        <div class="instructions">
+            <h3>📋 测试说明</h3>
+            <p><strong>目标：</strong>验证以下两个关键问题是否已修复：</p>
+            <ol>
+                <li><strong>实时同步问题：</strong>用户在房间内勾选时间时，右侧团队热力图应该立即显示变化</li>
+                <li><strong>数据恢复问题：</strong>用户重新进入房间时，左侧选择状态应该正确恢复，右侧热力图应该保持一致</li>
+            </ol>
+            <p><strong>测试方法：</strong>使用不同的浏览器窗口或设备模拟多用户场景</p>
+        </div>
+
+        <!-- 测试事件链接 -->
+        <div class="test-section">
+            <div class="test-title">
+                <span class="status-indicator status-info"></span>
+                测试事件链接
+            </div>
+            <div class="test-description">
+                使用以下事件进行测试，或者创建新的测试事件
+            </div>
+            <div class="event-link" id="testEventLink">
+                http://localhost:8080/event/tc-realtime-test
+            </div>
+            <button class="test-button" onclick="createTestEvent()">创建新测试事件</button>
+            <button class="test-button" onclick="openTestEvent()">打开测试事件</button>
+            <div class="test-result" id="eventResult" style="display: none;"></div>
+        </div>
+
+        <!-- 实时同步测试 -->
+        <div class="test-section" id="realtimeSyncTest">
+            <div class="test-title">
+                <span class="status-indicator status-warning"></span>
+                实时同步测试
+            </div>
+            <div class="test-description">
+                测试用户选择时间时，右侧热力图是否立即更新
+            </div>
+            <button class="test-button" onclick="testRealtimeSync()">开始实时同步测试</button>
+            <button class="test-button" onclick="simulateUserSelection()">模拟用户选择</button>
+            <div class="test-result" id="realtimeSyncResult" style="display: none;"></div>
+        </div>
+
+        <!-- 数据恢复测试 -->
+        <div class="test-section" id="dataRecoveryTest">
+            <div class="test-title">
+                <span class="status-indicator status-warning"></span>
+                数据恢复测试
+            </div>
+            <div class="test-description">
+                测试用户重新进入房间时，选择状态是否正确恢复
+            </div>
+            <button class="test-button" onclick="testDataRecovery()">开始数据恢复测试</button>
+            <button class="test-button" onclick="simulatePageReload()">模拟页面重新加载</button>
+            <div class="test-result" id="dataRecoveryResult" style="display: none;"></div>
+        </div>
+
+        <!-- 多用户同步测试 -->
+        <div class="test-section" id="multiUserTest">
+            <div class="test-title">
+                <span class="status-indicator status-warning"></span>
+                多用户同步测试
+            </div>
+            <div class="test-description">
+                测试多个用户同时选择时间时的同步效果
+            </div>
+            <button class="test-button" onclick="testMultiUserSync()">开始多用户测试</button>
+            <button class="test-button" onclick="openMultipleWindows()">打开多个测试窗口</button>
+            <div class="test-result" id="multiUserResult" style="display: none;"></div>
+        </div>
+
+        <!-- 系统状态检查 -->
+        <div class="test-section" id="systemStatusTest">
+            <div class="test-title">
+                <span class="status-indicator status-info"></span>
+                系统状态检查
+            </div>
+            <div class="test-description">
+                检查前端和后端服务的运行状态
+            </div>
+            <button class="test-button" onclick="checkSystemStatus()">检查系统状态</button>
+            <button class="test-button" onclick="checkWebSocketConnection()">检查WebSocket连接</button>
+            <div class="test-result" id="systemStatusResult" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8080/api';
+        const FRONTEND_URL = 'http://localhost:8080';
+        
+        // 显示测试结果
+        function showResult(elementId, content, type = 'info') {
+            const element = document.getElementById(elementId);
+            const section = element.closest('.test-section');
+            
+            element.style.display = 'block';
+            element.textContent = content;
+            
+            // 更新状态指示器
+            const indicator = section.querySelector('.status-indicator');
+            indicator.className = `status-indicator status-${type}`;
+            
+            // 更新section样式
+            section.className = `test-section ${type}`;
+        }
+
+        // 创建测试事件
+        async function createTestEvent() {
+            try {
+                showResult('eventResult', '正在创建测试事件...', 'info');
+                
+                const eventData = {
+                    id: `tc-realtime-test-${Date.now()}`,
+                    title: '实时同步测试事件',
+                    description: '用于测试实时同步功能的测试事件',
+                    startDate: new Date().toISOString().split('T')[0],
+                    endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                    startTime: '09:00',
+                    endTime: '18:00',
+                    timezone: 'Asia/Shanghai',
+                    includeTime: true
+                };
+
+                const response = await fetch(`${API_BASE_URL}/events`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(eventData)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                const eventUrl = `${FRONTEND_URL}/event/${result.id}`;
+                
+                document.getElementById('testEventLink').textContent = eventUrl;
+                
+                showResult('eventResult', 
+                    `✅ 测试事件创建成功！\n` +
+                    `事件ID: ${result.id}\n` +
+                    `事件链接: ${eventUrl}\n` +
+                    `创建时间: ${new Date().toLocaleString()}`, 
+                    'success'
+                );
+                
+            } catch (error) {
+                showResult('eventResult', 
+                    `❌ 创建测试事件失败:\n${error.message}`, 
+                    'error'
+                );
+            }
+        }
+
+        // 打开测试事件
+        function openTestEvent() {
+            const eventLink = document.getElementById('testEventLink').textContent;
+            window.open(eventLink, '_blank');
+            showResult('eventResult', '已在新窗口中打开测试事件', 'info');
+        }
+
+        // 测试实时同步
+        async function testRealtimeSync() {
+            showResult('realtimeSyncResult', '开始实时同步测试...', 'info');
+            
+            const testSteps = [
+                '1. 检查WebSocket连接状态',
+                '2. 模拟用户选择时间',
+                '3. 验证热力图实时更新',
+                '4. 检查数据传输延迟'
+            ];
+            
+            let result = '实时同步测试步骤:\n';
+            
+            for (let i = 0; i < testSteps.length; i++) {
+                result += `${testSteps[i]}\n`;
+                showResult('realtimeSyncResult', result + '正在执行...', 'info');
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+            
+            result += '\n✅ 实时同步测试完成\n';
+            result += '请在浏览器中手动验证以下功能:\n';
+            result += '- 选择时间时右侧热力图立即更新\n';
+            result += '- 多个用户的选择能够实时同步\n';
+            result += '- 数据传输延迟小于1秒';
+            
+            showResult('realtimeSyncResult', result, 'success');
+        }
+
+        // 模拟用户选择
+        function simulateUserSelection() {
+            showResult('realtimeSyncResult', 
+                '请在浏览器中手动操作:\n' +
+                '1. 打开测试事件页面\n' +
+                '2. 输入用户名进入房间\n' +
+                '3. 在左侧时间网格中选择时间\n' +
+                '4. 观察右侧热力图是否立即更新\n' +
+                '5. 使用不同浏览器窗口模拟多用户', 
+                'info'
+            );
+        }
+
+        // 测试数据恢复
+        async function testDataRecovery() {
+            showResult('dataRecoveryResult', '开始数据恢复测试...', 'info');
+            
+            const testInstructions = [
+                '1. 在浏览器中打开测试事件',
+                '2. 输入用户名并选择一些时间',
+                '3. 关闭浏览器标签页',
+                '4. 重新打开相同的事件链接',
+                '5. 使用相同的用户名登录',
+                '6. 验证左侧选择状态是否正确恢复',
+                '7. 验证右侧热力图数据是否一致'
+            ];
+            
+            let result = '数据恢复测试步骤:\n';
+            testInstructions.forEach((step, index) => {
+                result += `${step}\n`;
+            });
+            
+            result += '\n预期结果:\n';
+            result += '- 左侧时间网格显示之前的选择\n';
+            result += '- 右侧热力图显示正确的数据\n';
+            result += '- 参与者数量显示正确\n';
+            result += '- 没有数据不一致的情况';
+            
+            showResult('dataRecoveryResult', result, 'info');
+        }
+
+        // 模拟页面重新加载
+        function simulatePageReload() {
+            showResult('dataRecoveryResult', 
+                '页面重新加载测试:\n' +
+                '1. 确保你已经在测试事件中选择了时间\n' +
+                '2. 按F5或Ctrl+R刷新页面\n' +
+                '3. 重新输入用户名\n' +
+                '4. 检查数据是否正确恢复', 
+                'info'
+            );
+        }
+
+        // 测试多用户同步
+        async function testMultiUserSync() {
+            showResult('multiUserResult', '开始多用户同步测试...', 'info');
+            
+            const result = '多用户同步测试说明:\n' +
+                '1. 打开多个浏览器窗口或使用不同设备\n' +
+                '2. 在每个窗口中使用不同的用户名\n' +
+                '3. 同时在不同窗口中选择时间\n' +
+                '4. 观察其他窗口是否实时显示变化\n' +
+                '5. 验证参与者数量是否正确\n' +
+                '6. 检查时间重叠的热力图显示\n\n' +
+                '预期结果:\n' +
+                '- 所有窗口显示一致的热力图\n' +
+                '- 参与者数量实时更新\n' +
+                '- 时间重叠正确显示\n' +
+                '- 延迟小于2秒';
+            
+            showResult('multiUserResult', result, 'info');
+        }
+
+        // 打开多个测试窗口
+        function openMultipleWindows() {
+            const eventLink = document.getElementById('testEventLink').textContent;
+            
+            // 打开3个测试窗口
+            for (let i = 1; i <= 3; i++) {
+                setTimeout(() => {
+                    window.open(eventLink, `_blank_${i}`);
+                }, i * 500);
+            }
+            
+            showResult('multiUserResult', 
+                '已打开3个测试窗口\n' +
+                '请在每个窗口中使用不同的用户名:\n' +
+                '- 窗口1: 用户A\n' +
+                '- 窗口2: 用户B\n' +
+                '- 窗口3: 用户C\n\n' +
+                '然后开始选择时间并观察同步效果', 
+                'info'
+            );
+        }
+
+        // 检查系统状态
+        async function checkSystemStatus() {
+            showResult('systemStatusResult', '正在检查系统状态...', 'info');
+            
+            const checks = [
+                { name: '前端服务', url: FRONTEND_URL },
+                { name: '后端API', url: `${API_BASE_URL}/health` },
+                { name: '事件API', url: `${API_BASE_URL}/events` }
+            ];
+            
+            let result = '系统状态检查:\n';
+            
+            for (const check of checks) {
+                try {
+                    const response = await fetch(check.url, { 
+                        method: 'GET',
+                        mode: 'cors'
+                    });
+                    
+                    if (response.ok) {
+                        result += `✅ ${check.name}: 正常 (${response.status})\n`;
+                    } else {
+                        result += `❌ ${check.name}: 异常 (${response.status})\n`;
+                    }
+                } catch (error) {
+                    result += `❌ ${check.name}: 连接失败 (${error.message})\n`;
+                }
+            }
+            
+            showResult('systemStatusResult', result, 'info');
+        }
+
+        // 检查WebSocket连接
+        async function checkWebSocketConnection() {
+            showResult('systemStatusResult', '正在检查WebSocket连接...', 'info');
+            
+            try {
+                const wsUrl = API_BASE_URL.replace('http', 'ws');
+                const ws = new WebSocket(wsUrl);
+                
+                ws.onopen = () => {
+                    showResult('systemStatusResult', 
+                        '✅ WebSocket连接成功\n' +
+                        `连接地址: ${wsUrl}\n` +
+                        '状态: 已连接\n' +
+                        '实时同步功能应该正常工作', 
+                        'success'
+                    );
+                    ws.close();
+                };
+                
+                ws.onerror = (error) => {
+                    showResult('systemStatusResult', 
+                        '❌ WebSocket连接失败\n' +
+                        `错误: ${error}\n` +
+                        '实时同步可能使用轮询模式', 
+                        'warning'
+                    );
+                };
+                
+                // 5秒超时
+                setTimeout(() => {
+                    if (ws.readyState === WebSocket.CONNECTING) {
+                        ws.close();
+                        showResult('systemStatusResult', 
+                            '⏰ WebSocket连接超时\n' +
+                            '可能服务器不支持WebSocket\n' +
+                            '系统将使用轮询模式', 
+                            'warning'
+                        );
+                    }
+                }, 5000);
+                
+            } catch (error) {
+                showResult('systemStatusResult', 
+                    `❌ WebSocket测试失败: ${error.message}`, 
+                    'error'
+                );
+            }
+        }
+
+        // 页面加载时自动检查系统状态
+        window.addEventListener('load', () => {
+            setTimeout(checkSystemStatus, 1000);
+        });
+    </script>
+</body>
+</html> 

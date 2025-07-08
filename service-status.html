@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timee 服务状态检查</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        .status-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            border-left: 4px solid #6c757d;
+        }
+        .status-card.success {
+            border-left-color: #28a745;
+            background: #d4edda;
+        }
+        .status-card.error {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+        .status-card.warning {
+            border-left-color: #ffc107;
+            background: #fff3cd;
+        }
+        .service-name {
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+        .service-url {
+            color: #6c757d;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+        .service-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .status-online {
+            background: #28a745;
+            color: white;
+        }
+        .status-offline {
+            background: #dc3545;
+            color: white;
+        }
+        .status-checking {
+            background: #ffc107;
+            color: #212529;
+        }
+        .refresh-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1em;
+            margin: 20px auto;
+            display: block;
+        }
+        .refresh-btn:hover {
+            background: #0056b3;
+        }
+        .test-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #e9ecef;
+            border-radius: 8px;
+        }
+        .test-btn {
+            background: #17a2b8;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-btn:hover {
+            background: #138496;
+        }
+        .test-result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 6px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+        }
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Timee 服务状态</h1>
+        
+        <div id="services-status">
+            <div class="status-card" id="frontend-status">
+                <div class="service-name">前端应用</div>
+                <div class="service-url">http://localhost:5173</div>
+                <div class="service-status status-checking">检查中...</div>
+            </div>
+            
+            <div class="status-card" id="backend-status">
+                <div class="service-name">后端API</div>
+                <div class="service-url">http://localhost:3000</div>
+                <div class="service-status status-checking">检查中...</div>
+            </div>
+            
+            <div class="status-card" id="proxy-status">
+                <div class="service-name">代理服务器</div>
+                <div class="service-url">http://localhost:8080</div>
+                <div class="service-status status-checking">检查中...</div>
+            </div>
+            
+            <div class="status-card" id="external-status">
+                <div class="service-name">外部访问</div>
+                <div class="service-url">https://wmxkwzbmhflj.sealoshzh.site</div>
+                <div class="service-status status-checking">检查中...</div>
+            </div>
+        </div>
+        
+        <button class="refresh-btn" onclick="checkAllServices()">🔄 刷新状态</button>
+        
+        <div class="test-section">
+            <h3>🧪 功能测试</h3>
+            <button class="test-btn" onclick="testCreateEvent()">测试创建事件</button>
+            <button class="test-btn" onclick="testWebSocket()">测试WebSocket连接</button>
+            <button class="test-btn" onclick="testHealthCheck()">健康检查</button>
+            <div id="test-results"></div>
+        </div>
+    </div>
+
+    <script>
+        async function checkService(url, serviceName) {
+            try {
+                const response = await fetch(url, {
+                    method: 'HEAD',
+                    mode: 'no-cors'
+                });
+                return true;
+            } catch (error) {
+                try {
+                    // 尝试GET请求
+                    const response = await fetch(url, {
+                        method: 'GET',
+                        mode: 'no-cors'
+                    });
+                    return true;
+                } catch (e) {
+                    return false;
+                }
+            }
+        }
+
+        async function checkServiceWithCors(url) {
+            try {
+                const response = await fetch(url);
+                return response.ok;
+            } catch (error) {
+                return false;
+            }
+        }
+
+        async function updateServiceStatus(serviceId, isOnline) {
+            const serviceCard = document.getElementById(serviceId);
+            const statusElement = serviceCard.querySelector('.service-status');
+            
+            if (isOnline) {
+                statusElement.textContent = '在线';
+                statusElement.className = 'service-status status-online';
+                serviceCard.className = 'status-card success';
+            } else {
+                statusElement.textContent = '离线';
+                statusElement.className = 'service-status status-offline';
+                serviceCard.className = 'status-card error';
+            }
+        }
+
+        async function checkAllServices() {
+            // 重置所有状态为检查中
+            const statusElements = document.querySelectorAll('.service-status');
+            statusElements.forEach(el => {
+                el.textContent = '检查中...';
+                el.className = 'service-status status-checking';
+            });
+
+            // 检查前端
+            const frontendOnline = await checkService('http://localhost:5173', 'Frontend');
+            await updateServiceStatus('frontend-status', frontendOnline);
+
+            // 检查后端
+            const backendOnline = await checkServiceWithCors('http://localhost:3000/api');
+            await updateServiceStatus('backend-status', backendOnline);
+
+            // 检查代理服务器
+            const proxyOnline = await checkServiceWithCors('http://localhost:8080/health');
+            await updateServiceStatus('proxy-status', proxyOnline);
+
+            // 检查外部访问
+            const externalOnline = await checkServiceWithCors('https://wmxkwzbmhflj.sealoshzh.site');
+            await updateServiceStatus('external-status', externalOnline);
+        }
+
+        async function testCreateEvent() {
+            const resultsDiv = document.getElementById('test-results');
+            resultsDiv.innerHTML = '<div class="loading"></div> 正在测试事件创建...';
+
+            try {
+                const response = await fetch('http://localhost:3000/api/events', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        title: '测试事件',
+                        description: '功能测试',
+                        startDate: '2025-07-06T00:00:00.000Z',
+                        endDate: '2025-07-07T00:00:00.000Z',
+                        timezone: 'Asia/Shanghai'
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    resultsDiv.innerHTML = `
+                        <div class="test-result" style="border-left: 4px solid #28a745;">
+                            <strong>✅ 事件创建成功！</strong><br>
+                            事件ID: ${data.id}<br>
+                            事件名称: ${data.title}<br>
+                            创建时间: ${new Date(data.createdAt).toLocaleString()}
+                        </div>
+                    `;
+                } else {
+                    resultsDiv.innerHTML = `
+                        <div class="test-result" style="border-left: 4px solid #dc3545;">
+                            <strong>❌ 事件创建失败</strong><br>
+                            状态码: ${response.status}<br>
+                            错误信息: ${response.statusText}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="test-result" style="border-left: 4px solid #dc3545;">
+                        <strong>❌ 测试失败</strong><br>
+                        错误: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        async function testWebSocket() {
+            const resultsDiv = document.getElementById('test-results');
+            resultsDiv.innerHTML = '<div class="loading"></div> 正在测试WebSocket连接...';
+
+            try {
+                const socket = new WebSocket('ws://localhost:3000');
+                
+                socket.onopen = function() {
+                    resultsDiv.innerHTML = `
+                        <div class="test-result" style="border-left: 4px solid #28a745;">
+                            <strong>✅ WebSocket连接成功！</strong><br>
+                            状态: 已连接<br>
+                            测试时间: ${new Date().toLocaleString()}
+                        </div>
+                    `;
+                    socket.close();
+                };
+
+                socket.onerror = function(error) {
+                    resultsDiv.innerHTML = `
+                        <div class="test-result" style="border-left: 4px solid #dc3545;">
+                            <strong>❌ WebSocket连接失败</strong><br>
+                            错误: 连接被拒绝
+                        </div>
+                    `;
+                };
+
+                // 3秒后超时
+                setTimeout(() => {
+                    if (socket.readyState === WebSocket.CONNECTING) {
+                        socket.close();
+                        resultsDiv.innerHTML = `
+                            <div class="test-result" style="border-left: 4px solid #ffc107;">
+                                <strong>⚠️ WebSocket连接超时</strong><br>
+                                状态: 连接超时
+                            </div>
+                        `;
+                    }
+                }, 3000);
+
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="test-result" style="border-left: 4px solid #dc3545;">
+                        <strong>❌ WebSocket测试失败</strong><br>
+                        错误: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        async function testHealthCheck() {
+            const resultsDiv = document.getElementById('test-results');
+            resultsDiv.innerHTML = '<div class="loading"></div> 正在执行健康检查...';
+
+            try {
+                const response = await fetch('http://localhost:8080/health');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    let servicesHtml = '';
+                    
+                    Object.entries(data.services).forEach(([key, value]) => {
+                        if (typeof value === 'string' && (value === 'OK' || value === 'ERROR')) {
+                            const icon = value === 'OK' ? '✅' : '❌';
+                            servicesHtml += `${icon} ${key}: ${value}<br>`;
+                        }
+                    });
+
+                    resultsDiv.innerHTML = `
+                        <div class="test-result" style="border-left: 4px solid #28a745;">
+                            <strong>🏥 健康检查结果</strong><br>
+                            整体状态: ${data.status}<br>
+                            检查时间: ${new Date(data.timestamp).toLocaleString()}<br>
+                            <br>
+                            <strong>服务状态:</strong><br>
+                            ${servicesHtml}
+                        </div>
+                    `;
+                } else {
+                    resultsDiv.innerHTML = `
+                        <div class="test-result" style="border-left: 4px solid #dc3545;">
+                            <strong>❌ 健康检查失败</strong><br>
+                            状态码: ${response.status}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="test-result" style="border-left: 4px solid #dc3545;">
+                        <strong>❌ 健康检查失败</strong><br>
+                        错误: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // 页面加载时自动检查服务状态
+        window.onload = function() {
+            checkAllServices();
+        };
+    </script>
+</body>
+</html> 

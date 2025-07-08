@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>前端API测试 - tc-365667</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        
+        .log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        
+        .test-data {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        
+        .code {
+            background-color: #e9ecef;
+            padding: 2px 4px;
+            border-radius: 2px;
+            font-family: monospace;
+            font-size: 90%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 前端API测试 - tc-365667</h1>
+        <p>测试修复后的前端API调用是否正确发送数据</p>
+        
+        <div class="test-data">
+            <h3>测试数据预览</h3>
+            <p><strong>Event ID:</strong> <span class="code">tc-365667</span></p>
+            <p><strong>Paint Mode:</strong> <span class="code">available</span> (小写格式)</p>
+            <p><strong>测试用户:</strong> FrontendTest</p>
+            <p><strong>时间段:</strong> 2025-07-08 10:00-11:00</p>
+        </div>
+        
+        <button id="testSubmit">提交测试数据</button>
+        <button id="checkData">检查数据库</button>
+        <button id="clearData">清空测试数据</button>
+        
+        <div id="status" class="status info">
+            等待测试...
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>📝 测试日志</h2>
+        <div id="log" class="log">测试开始...\n</div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000/api';
+        const EVENT_ID = 'tc-365667';
+        
+        // 日志函数
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logElement = document.getElementById('log');
+            logElement.textContent += `[${timestamp}] ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+        
+        // 显示状态
+        function showStatus(message, type = 'info') {
+            const statusElement = document.getElementById('status');
+            statusElement.textContent = message;
+            statusElement.className = `status ${type}`;
+        }
+        
+        // 测试数据提交
+        async function testSubmit() {
+            try {
+                showStatus('正在提交测试数据...', 'info');
+                log('🧪 开始测试前端API调用');
+                
+                // 模拟前端的数据结构
+                const testData = {
+                    eventId: EVENT_ID,
+                    participantName: 'FrontendTest',
+                    userInitials: 'FT',
+                    paintMode: 'available', // 关键：使用小写格式
+                    timezone: 'UTC+8',
+                    availableSlots: [
+                        JSON.stringify({
+                            date: '2025-07-08',
+                            time: '10:00',
+                            dateIndex: 0,
+                            timeIndex: 2,
+                            type: 'available',
+                            utcTimestamp: Date.now(),
+                            originalTimezone: 'UTC+8'
+                        }),
+                        JSON.stringify({
+                            date: '2025-07-08',
+                            time: '10:15',
+                            dateIndex: 0,
+                            timeIndex: 3,
+                            type: 'available',
+                            utcTimestamp: Date.now() + 15*60*1000,
+                            originalTimezone: 'UTC+8'
+                        })
+                    ]
+                };
+                
+                log(`📤 发送数据: ${JSON.stringify(testData, null, 2)}`);
+                
+                const response = await fetch(`${API_BASE}/responses`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testData)
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    log(`✅ API调用成功: ${JSON.stringify(result, null, 2)}`);
+                    showStatus('测试数据提交成功！', 'success');
+                    
+                    // 立即检查数据库
+                    setTimeout(checkData, 1000);
+                } else {
+                    const error = await response.json().catch(() => ({ message: response.statusText }));
+                    log(`❌ API调用失败: ${response.status} - ${JSON.stringify(error, null, 2)}`);
+                    showStatus(`API调用失败: ${error.message}`, 'error');
+                }
+                
+            } catch (error) {
+                log(`❌ 网络错误: ${error.message}`);
+                showStatus(`网络错误: ${error.message}`, 'error');
+            }
+        }
+        
+        // 检查数据库
+        async function checkData() {
+            try {
+                showStatus('正在检查数据库...', 'info');
+                log('🔍 检查数据库中的数据');
+                
+                const response = await fetch(`${API_BASE}/responses/event/${EVENT_ID}`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`📊 数据库中的数据: ${JSON.stringify(data, null, 2)}`);
+                    
+                    if (data.length > 0) {
+                        showStatus(`数据库中有 ${data.length} 条记录`, 'success');
+                        
+                        // 检查paintMode格式
+                        data.forEach((item, index) => {
+                            log(`👤 用户 ${index + 1}: ${item.participantName}`);
+                            log(`   paintMode: "${item.paintMode}" (${typeof item.paintMode})`);
+                            log(`   时间段数量: ${item.availableSlots ? item.availableSlots.length : 0}`);
+                        });
+                    } else {
+                        showStatus('数据库中没有数据', 'error');
+                        log('⚠️ 数据库为空，API调用可能失败了');
+                    }
+                } else {
+                    log(`❌ 获取数据失败: ${response.status}`);
+                    showStatus('获取数据失败', 'error');
+                }
+                
+            } catch (error) {
+                log(`❌ 检查数据时发生错误: ${error.message}`);
+                showStatus(`检查失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // 清空测试数据
+        async function clearData() {
+            try {
+                showStatus('正在清空测试数据...', 'info');
+                log('🧹 清空测试数据');
+                
+                // 先获取所有数据
+                const getResponse = await fetch(`${API_BASE}/responses/event/${EVENT_ID}`);
+                const data = await getResponse.json();
+                
+                // 删除每条记录
+                for (const item of data) {
+                    try {
+                        const deleteResponse = await fetch(`${API_BASE}/responses/${item.id}`, {
+                            method: 'DELETE'
+                        });
+                        
+                        if (deleteResponse.ok) {
+                            log(`✅ 删除记录: ${item.participantName} (${item.id})`);
+                        } else {
+                            log(`❌ 删除失败: ${item.id}`);
+                        }
+                    } catch (error) {
+                        log(`❌ 删除记录时发生错误: ${error.message}`);
+                    }
+                }
+                
+                showStatus('测试数据清空完成', 'success');
+                
+                // 验证清空结果
+                setTimeout(checkData, 500);
+                
+            } catch (error) {
+                log(`❌ 清空数据时发生错误: ${error.message}`);
+                showStatus(`清空失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // 事件监听器
+        document.getElementById('testSubmit').addEventListener('click', testSubmit);
+        document.getElementById('checkData').addEventListener('click', checkData);
+        document.getElementById('clearData').addEventListener('click', clearData);
+        
+        // 初始化
+        log('🚀 前端API测试页面初始化完成');
+        log('📋 测试目标: 验证paintMode格式修复是否生效');
+        
+        // 自动检查初始状态
+        checkData();
+    </script>
+</body>
+</html> 

@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>保存状态模拟测试 - tc-365667</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .test-button {
+            background-color: #007bff;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background-color: #0056b3;
+        }
+        .test-button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        .log-container {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .log-entry {
+            margin: 2px 0;
+            padding: 2px 0;
+        }
+        .log-success { color: #28a745; }
+        .log-error { color: #dc3545; }
+        .log-info { color: #17a2b8; }
+        .log-warning { color: #ffc107; }
+        .simulation-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .user-panel {
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        .user-panel.active {
+            border-color: #007bff;
+            background-color: #f8f9fa;
+        }
+        .user-status {
+            font-weight: bold;
+            margin-bottom: 10px;
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+        .status-idle { background-color: #e9ecef; color: #495057; }
+        .status-saving { background-color: #cce5ff; color: #0056b3; }
+        .status-saved { background-color: #d4edda; color: #155724; }
+        .status-error { background-color: #f8d7da; color: #721c24; }
+        .status-unsaved { background-color: #fff3cd; color: #856404; }
+    </style>
+</head>
+<body>
+    <h1>🧪 保存状态模拟测试 - tc-365667</h1>
+    
+    <div class="container">
+        <h2>测试概述</h2>
+        <p>这个页面模拟用户在前端的实际操作，测试保存状态是否正确显示。</p>
+        <div class="info status">
+            <strong>测试场景：</strong> 模拟两个用户（Sid 和 qinguodongdong）分别选择时间，观察保存状态变化。
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🎭 用户操作模拟</h2>
+        <div class="simulation-panel">
+            <!-- 用户 Sid -->
+            <div class="user-panel" id="sid-panel">
+                <h3>用户: Sid</h3>
+                <div class="user-status status-idle" id="sid-status">状态: 空闲</div>
+                <div>
+                    <button class="test-button" onclick="simulateUserAction('Sid')">模拟选择时间</button>
+                    <button class="test-button" onclick="checkUserStatus('Sid')">检查状态</button>
+                    <button class="test-button" onclick="clearUserData('Sid')">清除数据</button>
+                </div>
+                <div id="sid-details" style="margin-top: 10px; font-size: 12px; color: #666;"></div>
+            </div>
+            
+            <!-- 用户 qinguodongdong -->
+            <div class="user-panel" id="qinguodongdong-panel">
+                <h3>用户: qinguodongdong</h3>
+                <div class="user-status status-idle" id="qinguodongdong-status">状态: 空闲</div>
+                <div>
+                    <button class="test-button" onclick="simulateUserAction('qinguodongdong')">模拟选择时间</button>
+                    <button class="test-button" onclick="checkUserStatus('qinguodongdong')">检查状态</button>
+                    <button class="test-button" onclick="clearUserData('qinguodongdong')">清除数据</button>
+                </div>
+                <div id="qinguodongdong-details" style="margin-top: 10px; font-size: 12px; color: #666;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>📊 实时状态监控</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div>
+                <h3>API数据状态</h3>
+                <div id="api-status">等待检查...</div>
+                <button class="test-button" onclick="refreshAPIStatus()">刷新API状态</button>
+            </div>
+            <div>
+                <h3>前端状态模拟</h3>
+                <div id="frontend-status">等待模拟...</div>
+                <button class="test-button" onclick="startStatusMonitoring()">开始监控</button>
+                <button class="test-button" onclick="stopStatusMonitoring()">停止监控</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>📝 操作日志</h2>
+        <div class="log-container" id="log-container"></div>
+        <button class="test-button" onclick="clearLog()">清空日志</button>
+    </div>
+
+    <script>
+        let monitoringInterval = null;
+        let userStates = {
+            'Sid': { status: 'idle', lastAction: null },
+            'qinguodongdong': { status: 'idle', lastAction: null }
+        };
+        
+        function log(message, type = 'info') {
+            const logContainer = document.getElementById('log-container');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry log-${type}`;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+        
+        function clearLog() {
+            document.getElementById('log-container').innerHTML = '';
+        }
+        
+        function updateUserStatus(userName, status, details = '') {
+            const statusElement = document.getElementById(`${userName.toLowerCase()}-status`);
+            const detailsElement = document.getElementById(`${userName.toLowerCase()}-details`);
+            const panelElement = document.getElementById(`${userName.toLowerCase()}-panel`);
+            
+            // 更新状态显示
+            statusElement.className = `user-status status-${status}`;
+            statusElement.textContent = `状态: ${getStatusText(status)}`;
+            
+            // 更新详细信息
+            detailsElement.textContent = details;
+            
+            // 更新面板样式
+            if (status === 'saving' || status === 'saved') {
+                panelElement.classList.add('active');
+            } else {
+                panelElement.classList.remove('active');
+            }
+            
+            // 更新内部状态
+            userStates[userName].status = status;
+            userStates[userName].lastAction = new Date().toISOString();
+        }
+        
+        function getStatusText(status) {
+            const statusMap = {
+                'idle': '空闲',
+                'saving': '保存中...',
+                'saved': '已保存',
+                'error': '保存失败',
+                'unsaved': '未保存'
+            };
+            return statusMap[status] || status;
+        }
+        
+        async function simulateUserAction(userName) {
+            try {
+                log(`${userName} 开始模拟选择时间...`, 'info');
+                updateUserStatus(userName, 'unsaved', '用户正在选择时间段');
+                
+                // 模拟用户选择时间的延迟
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                updateUserStatus(userName, 'saving', '正在提交到服务器');
+                
+                // 构造测试数据
+                const testData = {
+                    eventId: 'tc-365667',
+                    participantName: userName,
+                    userInitials: userName.charAt(0).toUpperCase(),
+                    paintMode: 'available',
+                    timezone: 'Asia/Shanghai',
+                    availableSlots: [
+                        JSON.stringify({
+                            date: '7/11',
+                            time: '10:00',
+                            dateIndex: 2,
+                            timeIndex: 4,
+                            type: 'available',
+                            utcTimestamp: Date.now()
+                        }),
+                        JSON.stringify({
+                            date: '7/11',
+                            time: '10:15',
+                            dateIndex: 2,
+                            timeIndex: 5,
+                            type: 'available',
+                            utcTimestamp: Date.now() + 900000
+                        })
+                    ]
+                };
+                
+                // 提交数据
+                const response = await fetch('/api/responses', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    updateUserStatus(userName, 'saved', `保存成功 ID: ${result.id}`);
+                    log(`${userName} 保存成功: ${result.id}`, 'success');
+                    
+                    // 模拟3秒后状态重置
+                    setTimeout(() => {
+                        updateUserStatus(userName, 'idle', '状态已重置');
+                        log(`${userName} 状态重置为空闲`, 'info');
+                    }, 3000);
+                } else {
+                    updateUserStatus(userName, 'error', `保存失败: ${result.message || '未知错误'}`);
+                    log(`${userName} 保存失败: ${result.message || '未知错误'}`, 'error');
+                }
+                
+            } catch (error) {
+                updateUserStatus(userName, 'error', `网络错误: ${error.message}`);
+                log(`${userName} 网络错误: ${error.message}`, 'error');
+            }
+        }
+        
+        async function checkUserStatus(userName) {
+            try {
+                log(`检查 ${userName} 的服务器状态...`, 'info');
+                
+                const response = await fetch('/api/responses/event/tc-365667');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const userResponse = data.find(r => r.participantName === userName);
+                    if (userResponse) {
+                        const details = `服务器上存在，时间段: ${userResponse.availableSlots.length}个`;
+                        updateUserStatus(userName, 'saved', details);
+                        log(`${userName} 在服务器上找到数据: ${userResponse.availableSlots.length}个时间段`, 'success');
+                    } else {
+                        updateUserStatus(userName, 'idle', '服务器上未找到数据');
+                        log(`${userName} 在服务器上未找到数据`, 'warning');
+                    }
+                } else {
+                    log(`检查 ${userName} 状态失败: ${data.message || '未知错误'}`, 'error');
+                }
+                
+            } catch (error) {
+                log(`检查 ${userName} 状态时网络错误: ${error.message}`, 'error');
+            }
+        }
+        
+        async function clearUserData(userName) {
+            try {
+                log(`清除 ${userName} 的数据...`, 'info');
+                
+                // 首先获取用户的响应ID
+                const response = await fetch('/api/responses/event/tc-365667');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const userResponse = data.find(r => r.participantName === userName);
+                    if (userResponse) {
+                        // 删除用户数据
+                        const deleteResponse = await fetch(`/api/responses/${userResponse.id}`, {
+                            method: 'DELETE'
+                        });
+                        
+                        if (deleteResponse.ok) {
+                            updateUserStatus(userName, 'idle', '数据已清除');
+                            log(`${userName} 数据清除成功`, 'success');
+                        } else {
+                            log(`${userName} 数据清除失败`, 'error');
+                        }
+                    } else {
+                        updateUserStatus(userName, 'idle', '无数据需要清除');
+                        log(`${userName} 无数据需要清除`, 'warning');
+                    }
+                }
+                
+            } catch (error) {
+                log(`清除 ${userName} 数据时出错: ${error.message}`, 'error');
+            }
+        }
+        
+        async function refreshAPIStatus() {
+            try {
+                const response = await fetch('/api/responses/event/tc-365667');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('api-status').innerHTML = `
+                        <div class="success status">
+                            <strong>API状态正常</strong><br>
+                            参与者数量: ${data.length}<br>
+                            用户: ${data.map(r => r.participantName).join(', ')}
+                        </div>
+                    `;
+                    log(`API状态检查成功，共 ${data.length} 个参与者`, 'success');
+                } else {
+                    document.getElementById('api-status').innerHTML = `
+                        <div class="error status">
+                            <strong>API状态异常</strong><br>
+                            错误: ${data.message || '未知错误'}
+                        </div>
+                    `;
+                    log('API状态检查失败', 'error');
+                }
+            } catch (error) {
+                document.getElementById('api-status').innerHTML = `
+                    <div class="error status">
+                        <strong>网络错误</strong><br>
+                        ${error.message}
+                    </div>
+                `;
+                log('API状态检查网络错误: ' + error.message, 'error');
+            }
+        }
+        
+        function updateFrontendStatus() {
+            const now = new Date().toLocaleTimeString();
+            const sidStatus = userStates['Sid'].status;
+            const qinguodongdongStatus = userStates['qinguodongdong'].status;
+            
+            document.getElementById('frontend-status').innerHTML = `
+                <div class="info status">
+                    <strong>前端状态 (${now})</strong><br>
+                    Sid: ${getStatusText(sidStatus)}<br>
+                    qinguodongdong: ${getStatusText(qinguodongdongStatus)}
+                </div>
+            `;
+        }
+        
+        function startStatusMonitoring() {
+            if (monitoringInterval) {
+                clearInterval(monitoringInterval);
+            }
+            
+            log('开始状态监控...', 'info');
+            monitoringInterval = setInterval(() => {
+                updateFrontendStatus();
+                refreshAPIStatus();
+            }, 2000);
+            
+            // 立即执行一次
+            updateFrontendStatus();
+            refreshAPIStatus();
+        }
+        
+        function stopStatusMonitoring() {
+            if (monitoringInterval) {
+                clearInterval(monitoringInterval);
+                monitoringInterval = null;
+                log('停止状态监控', 'info');
+            }
+        }
+        
+        // 页面加载时自动开始监控
+        window.onload = function() {
+            log('页面加载完成，开始初始化...', 'info');
+            refreshAPIStatus();
+            updateFrontendStatus();
+        };
+    </script>
+</body>
+</html> 

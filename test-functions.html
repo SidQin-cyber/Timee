@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timee 功能测试</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8fafc;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background: #000;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px 10px 10px 0;
+            font-size: 14px;
+        }
+        .test-button:hover {
+            background: #333;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .loading {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        h1 {
+            color: #1a202c;
+            text-align: center;
+        }
+        h2 {
+            color: #2d3748;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚀 Timee 功能测试面板</h1>
+    
+    <div class="test-section">
+        <h2>📅 创建活动测试</h2>
+        <button class="test-button" onclick="testCreateEvent()">创建测试活动</button>
+        <button class="test-button" onclick="testCreateEventWithError()">测试错误处理</button>
+        <div id="result-create-event" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>❤️ 点赞功能测试</h2>
+        <button class="test-button" onclick="testLikeToggle()">切换点赞状态</button>
+        <button class="test-button" onclick="testLikeStats()">获取点赞统计</button>
+        <button class="test-button" onclick="testLikeStatus()">获取用户状态</button>
+        <div id="result-like" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔗 API 连接测试</h2>
+        <button class="test-button" onclick="testAPIHealth()">检查API健康状态</button>
+        <button class="test-button" onclick="testProxyConnection()">检查代理连接</button>
+        <div id="result-api" class="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+        const DIRECT_API_BASE = 'http://localhost:3000/api';
+        
+        function showResult(elementId, content, type = 'success') {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = `result ${type}`;
+            element.textContent = content;
+        }
+
+        async function testCreateEvent() {
+            const resultEl = document.getElementById('result-create-event');
+            showResult('result-create-event', '创建中...', 'loading');
+            
+            const eventData = {
+                title: `测试活动 ${Date.now()}`,
+                description: "通过测试面板创建的活动",
+                startDate: "2025-07-06",
+                endDate: "2025-07-06",
+                startTime: "09:00",
+                endTime: "17:00",
+                timezone: "UTC+8",
+                eventType: "group",
+                includeTime: true,
+                selectedDates: ["2025-07-06"]
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE}/events`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(eventData)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                showResult('result-create-event', 
+                    `✅ 创建成功 (${response.status})\n活动ID: ${data.id}\n标题: ${data.title}\n时间: ${data.startDate} 到 ${data.endDate}`, 
+                    'success'
+                );
+            } catch (error) {
+                showResult('result-create-event', 
+                    `❌ 创建失败: ${error.message}`, 
+                    'error'
+                );
+            }
+        }
+
+        async function testCreateEventWithError() {
+            const resultEl = document.getElementById('result-create-event');
+            showResult('result-create-event', '测试错误处理...', 'loading');
+            
+            const invalidEventData = {
+                title: "",  // 空标题应该引发错误
+                eventType: "INVALID_TYPE"  // 无效类型
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE}/events`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(invalidEventData)
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    showResult('result-create-event', 
+                        `✅ 错误处理正常 (${response.status})\n错误信息: ${JSON.stringify(data, null, 2)}`, 
+                        'success'
+                    );
+                } else {
+                    showResult('result-create-event', 
+                        `⚠️ 预期错误但成功了: ${JSON.stringify(data, null, 2)}`, 
+                        'error'
+                    );
+                }
+            } catch (error) {
+                showResult('result-create-event', 
+                    `✅ 网络错误处理正常: ${error.message}`, 
+                    'success'
+                );
+            }
+        }
+
+        async function testLikeToggle() {
+            const resultEl = document.getElementById('result-like');
+            showResult('result-like', '切换点赞状态...', 'loading');
+            
+            const userId = `test-user-${Date.now()}`;
+            
+            try {
+                const response = await fetch(`${API_BASE}/likes/toggle`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        userId: userId,
+                        target: 'testimonials'
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                showResult('result-like', 
+                    `✅ 点赞成功 (${response.status})\n用户ID: ${userId}\n总点赞数: ${data.count}\n当前状态: ${data.isLiked ? '已点赞' : '未点赞'}\n操作: ${data.action}`, 
+                    'success'
+                );
+            } catch (error) {
+                showResult('result-like', 
+                    `❌ 点赞失败: ${error.message}`, 
+                    'error'
+                );
+            }
+        }
+
+        async function testLikeStats() {
+            const resultEl = document.getElementById('result-like');
+            showResult('result-like', '获取点赞统计...', 'loading');
+            
+            try {
+                const response = await fetch(`${API_BASE}/likes/stats`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                showResult('result-like', 
+                    `✅ 获取统计成功 (${response.status})\n总点赞数: ${data.count}\n目标: ${data.target}\n更新时间: ${data.updatedAt}`, 
+                    'success'
+                );
+            } catch (error) {
+                showResult('result-like', 
+                    `❌ 获取统计失败: ${error.message}`, 
+                    'error'
+                );
+            }
+        }
+
+        async function testLikeStatus() {
+            const resultEl = document.getElementById('result-like');
+            showResult('result-like', '获取用户状态...', 'loading');
+            
+            const userId = 'test-user-123';
+            
+            try {
+                const response = await fetch(`${API_BASE}/likes/status/${userId}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                showResult('result-like', 
+                    `✅ 获取状态成功 (${response.status})\n用户ID: ${userId}\n总点赞数: ${data.count}\n是否已点赞: ${data.isLiked ? '是' : '否'}\n目标: ${data.target}`, 
+                    'success'
+                );
+            } catch (error) {
+                showResult('result-like', 
+                    `❌ 获取状态失败: ${error.message}`, 
+                    'error'
+                );
+            }
+        }
+
+        async function testAPIHealth() {
+            const resultEl = document.getElementById('result-api');
+            showResult('result-api', '检查API健康状态...', 'loading');
+            
+            try {
+                // 测试代理连接
+                const proxyResponse = await fetch(`${API_BASE}/health`);
+                const proxyData = await proxyResponse.json();
+                
+                // 测试直连
+                const directResponse = await fetch(`${DIRECT_API_BASE}/health`);
+                const directData = await directResponse.json();
+                
+                showResult('result-api', 
+                    `✅ API健康检查成功\n\n代理连接 (${proxyResponse.status}):\n${JSON.stringify(proxyData, null, 2)}\n\n直连 (${directResponse.status}):\n${JSON.stringify(directData, null, 2)}`, 
+                    'success'
+                );
+            } catch (error) {
+                showResult('result-api', 
+                    `❌ API健康检查失败: ${error.message}`, 
+                    'error'
+                );
+            }
+        }
+
+        async function testProxyConnection() {
+            const resultEl = document.getElementById('result-api');
+            showResult('result-api', '检查代理连接...', 'loading');
+            
+            try {
+                const response = await fetch(`${API_BASE}/events`);
+                const data = await response.json();
+                
+                showResult('result-api', 
+                    `✅ 代理连接正常 (${response.status})\n获取到 ${data.length} 个事件\n\n最新事件:\n${JSON.stringify(data.slice(0, 2), null, 2)}`, 
+                    'success'
+                );
+            } catch (error) {
+                showResult('result-api', 
+                    `❌ 代理连接失败: ${error.message}`, 
+                    'error'
+                );
+            }
+        }
+
+        // 页面加载时自动检查API状态
+        window.onload = function() {
+            testAPIHealth();
+        };
+    </script>
+</body>
+</html> 

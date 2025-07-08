@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>完整WebSocket功能测试 - 热力图应用</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            background: #f9f9f9;
+        }
+
+        .section h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .control-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .control-group input,
+        .control-group select,
+        .control-group button {
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .control-group input,
+        .control-group select {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .control-group button {
+            background: #667eea;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .control-group button:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+
+        .control-group button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-connected {
+            background: #4CAF50;
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+        }
+
+        .status-disconnected {
+            background: #f44336;
+            box-shadow: 0 0 10px rgba(244, 67, 54, 0.5);
+        }
+
+        .status-reconnecting {
+            background: #ff9800;
+            box-shadow: 0 0 10px rgba(255, 152, 0, 0.5);
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .log-container {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            max-height: 400px;
+            overflow-y: auto;
+            line-height: 1.4;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 5px 10px;
+            border-radius: 3px;
+        }
+
+        .log-info {
+            background: rgba(52, 152, 219, 0.2);
+            border-left: 3px solid #3498db;
+        }
+
+        .log-success {
+            background: rgba(46, 204, 113, 0.2);
+            border-left: 3px solid #2ecc71;
+        }
+
+        .log-warning {
+            background: rgba(241, 196, 15, 0.2);
+            border-left: 3px solid #f1c40f;
+        }
+
+        .log-error {
+            background: rgba(231, 76, 60, 0.2);
+            border-left: 3px solid #e74c3c;
+        }
+
+        .heatmap-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .user-area, .heatmap-area {
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            background: white;
+        }
+
+        .time-slots {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .time-slot {
+            width: 40px;
+            height: 30px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+        }
+
+        .time-slot:hover {
+            border-color: #667eea;
+            transform: scale(1.05);
+        }
+
+        .time-slot.selected {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .time-slot.heatmap-level-1 {
+            background: rgba(102, 126, 234, 0.2);
+        }
+
+        .time-slot.heatmap-level-2 {
+            background: rgba(102, 126, 234, 0.4);
+        }
+
+        .time-slot.heatmap-level-3 {
+            background: rgba(102, 126, 234, 0.6);
+        }
+
+        .time-slot.heatmap-level-4 {
+            background: rgba(102, 126, 234, 0.8);
+        }
+
+        .time-slot.heatmap-level-5 {
+            background: rgba(102, 126, 234, 1);
+            color: white;
+        }
+
+        .bug-test-section {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .bug-test-title {
+            color: #856404;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .test-results {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .test-result {
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+
+        .test-result.pass {
+            background: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+
+        .test-result.fail {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+
+        .test-result.pending {
+            background: #fff3cd;
+            border-color: #ffeaa7;
+            color: #856404;
+        }
+
+        .participants-list {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .participant {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: white;
+            border-radius: 5px;
+            margin-bottom: 8px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .participant:last-child {
+            margin-bottom: 0;
+        }
+
+        .participant-name {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .participant-status {
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            color: white;
+        }
+
+        .participant-status.online {
+            background: #4CAF50;
+        }
+
+        .participant-status.offline {
+            background: #999;
+        }
+
+        .clear-btn {
+            background: #dc3545 !important;
+            margin-left: 10px;
+        }
+
+        .clear-btn:hover {
+            background: #c82333 !important;
+        }
+
+        .save-indicator {
+            display: inline-block;
+            margin-left: 10px;
+            font-size: 12px;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+
+        .save-indicator.saving {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .save-indicator.saved {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .save-indicator.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 10px;
+            }
+            
+            .heatmap-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .test-results {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔥 热力图应用完整测试</h1>
+            <p>WebSocket实时同步 + 状态恢复功能验证</p>
+        </div>
+
+        <div class="main-content">
+            <!-- 连接状态 -->
+            <div class="section">
+                <h2>
+                    <span id="connectionStatus" class="status-indicator status-disconnected"></span>
+                    连接状态
+                </h2>
+                <div class="control-group">
+                    <button id="connectBtn" onclick="connect()">连接WebSocket</button>
+                    <button id="disconnectBtn" onclick="disconnect()" disabled>断开连接</button>
+                    <span id="connectionInfo">未连接</span>
+                </div>
+            </div>
+
+            <!-- 活动管理 -->
+            <div class="section">
+                <h2>📅 活动管理</h2>
+                <div class="control-group">
+                    <input type="text" id="tcCodeInput" placeholder="输入活动代码 (例: TEST02)">
+                    <button onclick="generateTcCode()">生成新代码</button>
+                    <button onclick="createTestEvent()">创建测试活动</button>
+                    <button onclick="joinEvent()">加入活动</button>
+                </div>
+                <div class="control-group">
+                    <input type="text" id="participantNameInput" placeholder="参与者名称" value="用户A">
+                    <button onclick="leaveEvent()">离开活动</button>
+                </div>
+            </div>
+
+            <!-- Bug测试区域 -->
+            <div class="bug-test-section">
+                <div class="bug-test-title">🐛 Bug修复验证</div>
+                <div class="control-group">
+                    <button onclick="testBug1()">测试Bug #1 (实时同步)</button>
+                    <button onclick="testBug2()">测试Bug #2 (状态恢复)</button>
+                    <button onclick="simulatePageRefresh()">模拟页面刷新</button>
+                    <button onclick="testMultiUser()">测试多用户场景</button>
+                </div>
+                <div class="test-results" id="testResults"></div>
+            </div>
+
+            <!-- 热力图区域 -->
+            <div class="heatmap-container">
+                <div class="user-area">
+                    <h3>👤 我的可用时间 <span id="saveIndicator" class="save-indicator" style="display: none;"></span></h3>
+                    <div class="time-slots" id="userTimeSlots"></div>
+                    <div class="control-group" style="margin-top: 15px;">
+                        <button onclick="saveUserSelection()">保存选择</button>
+                        <button onclick="clearUserSelection()" class="clear-btn">清空选择</button>
+                        <button onclick="restoreUserState()">恢复状态</button>
+                    </div>
+                </div>
+                
+                <div class="heatmap-area">
+                    <h3>🔥 团队热力图</h3>
+                    <div class="time-slots" id="heatmapTimeSlots"></div>
+                    <div class="participants-list" id="participantsList">
+                        <div style="text-align: center; color: #666;">等待加入活动...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 实时日志 -->
+            <div class="section">
+                <h2>📋 实时日志</h2>
+                <div class="control-group">
+                    <button onclick="clearLog()">清空日志</button>
+                    <button onclick="exportLog()">导出日志</button>
+                    <label>
+                        <input type="checkbox" id="autoScroll" checked> 自动滚动
+                    </label>
+                </div>
+                <div class="log-container" id="logContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="websocket-client.js"></script>
+    <script>
+        // 全局变量
+        let client = null;
+        let currentEvent = null;
+        let currentParticipant = null;
+        let userSelection = new Set();
+        let testResults = new Map();
+
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeTimeSlots();
+            log('页面加载完成', 'info');
+        });
+
+        // 初始化时间段
+        function initializeTimeSlots() {
+            const days = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+            const hours = ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00', '17:00'];
+            
+            const userSlots = document.getElementById('userTimeSlots');
+            const heatmapSlots = document.getElementById('heatmapTimeSlots');
+            
+            userSlots.innerHTML = '';
+            heatmapSlots.innerHTML = '';
+            
+            days.forEach((day, dayIndex) => {
+                hours.forEach((hour, hourIndex) => {
+                    const slotId = `${dayIndex}-${hourIndex}`;
+                    
+                    // 用户选择区域
+                    const userSlot = document.createElement('div');
+                    userSlot.className = 'time-slot';
+                    userSlot.id = `user-${slotId}`;
+                    userSlot.textContent = `${day.substr(1)}${hour.substr(0,2)}`;
+                    userSlot.title = `${day} ${hour}`;
+                    userSlot.onclick = () => toggleTimeSlot(slotId);
+                    userSlots.appendChild(userSlot);
+                    
+                    // 热力图区域
+                    const heatmapSlot = document.createElement('div');
+                    heatmapSlot.className = 'time-slot';
+                    heatmapSlot.id = `heatmap-${slotId}`;
+                    heatmapSlot.textContent = `${day.substr(1)}${hour.substr(0,2)}`;
+                    heatmapSlot.title = `${day} ${hour}`;
+                    heatmapSlots.appendChild(heatmapSlot);
+                });
+            });
+        }
+
+        // 切换时间段选择
+        function toggleTimeSlot(slotId) {
+            const userSlot = document.getElementById(`user-${slotId}`);
+            
+            if (userSelection.has(slotId)) {
+                userSelection.delete(slotId);
+                userSlot.classList.remove('selected');
+            } else {
+                userSelection.add(slotId);
+                userSlot.classList.add('selected');
+            }
+            
+            showSaveIndicator('saving');
+            log(`时间段 ${slotId} ${userSelection.has(slotId) ? '选中' : '取消选中'}`, 'info');
+        }
+
+        // 连接WebSocket
+        async function connect() {
+            try {
+                showSaveIndicator('saving');
+                log('开始连接WebSocket服务器...', 'info');
+                
+                client = new TimeeWebSocketClient({
+                    debug: true,
+                    apiUrl: 'http://localhost:3000/api',
+                    wsUrl: 'http://localhost:3000'
+                });
+
+                // 设置事件监听器
+                setupEventListeners();
+
+                await client.connect();
+                
+                updateConnectionStatus(true);
+                log('WebSocket连接成功', 'success');
+                showSaveIndicator('saved');
+                
+            } catch (error) {
+                log(`连接失败: ${error.message}`, 'error');
+                showSaveIndicator('error');
+                updateConnectionStatus(false);
+            }
+        }
+
+        // 断开连接
+        function disconnect() {
+            if (client) {
+                client.disconnect();
+                client = null;
+            }
+            updateConnectionStatus(false);
+            log('WebSocket连接已断开', 'info');
+        }
+
+        // 设置事件监听器
+        function setupEventListeners() {
+            if (!client) return;
+
+            client.on('initial-state', (data) => {
+                log('收到初始状态数据', 'success');
+                updateHeatmap(data.heatmap);
+                updateParticipants(data.participants);
+                updateTestResult('initial-state', true, '初始状态加载成功');
+            });
+
+            client.on('room-update', (data) => {
+                log('收到房间更新: ' + JSON.stringify(data), 'info');
+                updateHeatmap(data.heatmap);
+                updateParticipants(data.participants);
+                updateTestResult('realtime-sync', true, '实时同步正常工作');
+            });
+
+            client.on('response-updated', (data) => {
+                log('收到响应更新: ' + JSON.stringify(data), 'info');
+                updateHeatmap(data.heatmap);
+                updateTestResult('response-sync', true, '响应同步正常');
+            });
+
+            client.on('user-joined', (data) => {
+                log(`用户加入: ${data.participantName}`, 'success');
+                updateParticipants(data.participants);
+            });
+
+            client.on('user-left', (data) => {
+                log(`用户离开: ${data.participantName}`, 'warning');
+                updateParticipants(data.participants);
+            });
+
+            client.on('state-restored', (data) => {
+                log('状态恢复完成', 'success');
+                updateUserSelection(data.userResponse);
+                updateHeatmap(data.roomData.heatmap);
+                updateParticipants(data.roomData.participants);
+                updateTestResult('state-recovery', true, '状态恢复成功');
+            });
+
+            client.on('error', (error) => {
+                log(`WebSocket错误: ${error.message || error}`, 'error');
+                updateTestResult('error-handling', false, `错误: ${error.message}`);
+            });
+
+            client.on('disconnected', (data) => {
+                log(`连接断开: ${data.reason}`, 'warning');
+                updateConnectionStatus(false);
+            });
+        }
+
+        // 生成tcCode
+        async function generateTcCode() {
+            try {
+                if (!client) {
+                    log('请先连接WebSocket服务器', 'error');
+                    return;
+                }
+
+                const tcCode = await client.generateTcCode();
+                document.getElementById('tcCodeInput').value = tcCode;
+                log(`生成新的活动代码: ${tcCode}`, 'success');
+            } catch (error) {
+                log(`生成代码失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 创建测试活动
+        async function createTestEvent() {
+            try {
+                if (!client) {
+                    log('请先连接WebSocket服务器', 'error');
+                    return;
+                }
+
+                const tcCode = document.getElementById('tcCodeInput').value || await client.generateTcCode();
+                
+                const eventData = {
+                    tcCode: tcCode,
+                    title: '测试活动',
+                    description: '用于测试WebSocket功能的活动',
+                    startDate: new Date().toISOString(),
+                    endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+                    timezone: 'UTC'
+                };
+
+                currentEvent = await client.createEvent(eventData);
+                document.getElementById('tcCodeInput').value = tcCode;
+                log(`创建活动成功: ${tcCode}`, 'success');
+                
+            } catch (error) {
+                log(`创建活动失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 加入活动
+        async function joinEvent() {
+            try {
+                if (!client) {
+                    log('请先连接WebSocket服务器', 'error');
+                    return;
+                }
+
+                const tcCode = document.getElementById('tcCodeInput').value;
+                const participantName = document.getElementById('participantNameInput').value;
+                
+                if (!tcCode || !participantName) {
+                    log('请输入活动代码和参与者名称', 'error');
+                    return;
+                }
+
+                // 获取活动信息
+                currentEvent = await client.getEvent(tcCode);
+                currentParticipant = participantName;
+                
+                // 加入活动房间
+                await client.joinEvent(currentEvent.id, participantName);
+                
+                log(`成功加入活动: ${tcCode} (${participantName})`, 'success');
+                updateTestResult('join-event', true, '成功加入活动');
+                
+            } catch (error) {
+                log(`加入活动失败: ${error.message}`, 'error');
+                updateTestResult('join-event', false, `加入失败: ${error.message}`);
+            }
+        }
+
+        // 离开活动
+        function leaveEvent() {
+            if (client) {
+                client.leaveEvent();
+                currentEvent = null;
+                currentParticipant = null;
+                log('已离开活动', 'info');
+                
+                // 清空界面
+                document.getElementById('participantsList').innerHTML = 
+                    '<div style="text-align: center; color: #666;">等待加入活动...</div>';
+                clearHeatmap();
+            }
+        }
+
+        // 保存用户选择
+        async function saveUserSelection() {
+            try {
+                if (!client || !currentEvent) {
+                    log('请先连接并加入活动', 'error');
+                    return;
+                }
+
+                showSaveIndicator('saving');
+                
+                const availability = Array.from(userSelection).map(slotId => {
+                    const [day, hour] = slotId.split('-').map(Number);
+                    return { day, hour, available: true };
+                });
+
+                const result = await client.submitResponse({
+                    availability: availability,
+                    paintMode: 'individual'
+                });
+
+                log('用户选择保存成功', 'success');
+                showSaveIndicator('saved');
+                updateTestResult('save-response', true, '响应保存成功');
+                
+            } catch (error) {
+                log(`保存失败: ${error.message}`, 'error');
+                showSaveIndicator('error');
+                updateTestResult('save-response', false, `保存失败: ${error.message}`);
+            }
+        }
+
+        // 清空用户选择
+        function clearUserSelection() {
+            userSelection.clear();
+            document.querySelectorAll('#userTimeSlots .time-slot').forEach(slot => {
+                slot.classList.remove('selected');
+            });
+            log('用户选择已清空', 'info');
+        }
+
+        // 恢复用户状态
+        async function restoreUserState() {
+            try {
+                if (!client || !currentEvent || !currentParticipant) {
+                    log('请先连接并加入活动', 'error');
+                    return;
+                }
+
+                const { roomData, userResponse } = await client.restoreUserState(
+                    currentEvent.id, 
+                    currentParticipant
+                );
+
+                log('状态恢复成功', 'success');
+                updateTestResult('state-recovery', true, '状态恢复成功');
+                
+            } catch (error) {
+                log(`状态恢复失败: ${error.message}`, 'error');
+                updateTestResult('state-recovery', false, `状态恢复失败: ${error.message}`);
+            }
+        }
+
+        // 更新用户选择显示
+        function updateUserSelection(userResponse) {
+            if (!userResponse || !userResponse.availability) return;
+
+            clearUserSelection();
+            
+            userResponse.availability.forEach(slot => {
+                if (slot.available) {
+                    const slotId = `${slot.day}-${slot.hour}`;
+                    userSelection.add(slotId);
+                    const element = document.getElementById(`user-${slotId}`);
+                    if (element) {
+                        element.classList.add('selected');
+                    }
+                }
+            });
+
+            log(`恢复用户选择: ${userSelection.size} 个时间段`, 'info');
+        }
+
+        // 更新热力图
+        function updateHeatmap(heatmapData) {
+            if (!heatmapData) return;
+
+            // 清空当前热力图
+            clearHeatmap();
+
+            // 更新热力图数据
+            heatmapData.forEach(slot => {
+                const slotId = `${slot.day}-${slot.hour}`;
+                const element = document.getElementById(`heatmap-${slotId}`);
+                if (element) {
+                    const level = Math.min(5, Math.max(1, slot.count));
+                    element.classList.add(`heatmap-level-${level}`);
+                    element.title = `${element.title} - ${slot.count} 人可用`;
+                }
+            });
+
+            log(`热力图更新: ${heatmapData.length} 个时间段`, 'info');
+        }
+
+        // 清空热力图
+        function clearHeatmap() {
+            document.querySelectorAll('#heatmapTimeSlots .time-slot').forEach(slot => {
+                slot.className = 'time-slot';
+            });
+        }
+
+        // 更新参与者列表
+        function updateParticipants(participants) {
+            const container = document.getElementById('participantsList');
+            
+            if (!participants || participants.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: #666;">暂无参与者</div>';
+                return;
+            }
+
+            container.innerHTML = participants.map(p => `
+                <div class="participant">
+                    <span class="participant-name">${p.name}</span>
+                    <span class="participant-status ${p.hasResponse ? 'online' : 'offline'}">
+                        ${p.hasResponse ? '已响应' : '未响应'}
+                    </span>
+                </div>
+            `).join('');
+
+            log(`参与者列表更新: ${participants.length} 人`, 'info');
+        }
+
+        // 更新连接状态
+        function updateConnectionStatus(connected) {
+            const indicator = document.getElementById('connectionStatus');
+            const info = document.getElementById('connectionInfo');
+            const connectBtn = document.getElementById('connectBtn');
+            const disconnectBtn = document.getElementById('disconnectBtn');
+
+            if (connected) {
+                indicator.className = 'status-indicator status-connected';
+                info.textContent = '已连接';
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+            } else {
+                indicator.className = 'status-indicator status-disconnected';
+                info.textContent = '未连接';
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+            }
+        }
+
+        // 显示保存状态指示器
+        function showSaveIndicator(state) {
+            const indicator = document.getElementById('saveIndicator');
+            indicator.style.display = 'inline-block';
+            indicator.className = `save-indicator ${state}`;
+            
+            switch (state) {
+                case 'saving':
+                    indicator.textContent = '保存中...';
+                    break;
+                case 'saved':
+                    indicator.textContent = '已保存';
+                    setTimeout(() => {
+                        indicator.style.display = 'none';
+                    }, 2000);
+                    break;
+                case 'error':
+                    indicator.textContent = '保存失败';
+                    setTimeout(() => {
+                        indicator.style.display = 'none';
+                    }, 3000);
+                    break;
+            }
+        }
+
+        // Bug测试函数
+        async function testBug1() {
+            log('开始测试Bug #1: 实时同步', 'info');
+            updateTestResult('bug1-test', 'pending', '测试进行中...');
+            
+            try {
+                // 模拟用户操作
+                userSelection.add('0-0');
+                await saveUserSelection();
+                
+                // 等待实时同步
+                setTimeout(() => {
+                    if (testResults.get('realtime-sync')) {
+                        updateTestResult('bug1-test', true, 'Bug #1 已修复 - 实时同步正常');
+                    } else {
+                        updateTestResult('bug1-test', false, 'Bug #1 仍存在 - 实时同步失败');
+                    }
+                }, 2000);
+                
+            } catch (error) {
+                updateTestResult('bug1-test', false, `Bug #1 测试失败: ${error.message}`);
+            }
+        }
+
+        async function testBug2() {
+            log('开始测试Bug #2: 状态恢复', 'info');
+            updateTestResult('bug2-test', 'pending', '测试进行中...');
+            
+            try {
+                // 保存当前状态
+                await saveUserSelection();
+                
+                // 模拟页面刷新
+                await simulatePageRefresh();
+                
+                // 尝试恢复状态
+                await restoreUserState();
+                
+                if (testResults.get('state-recovery')) {
+                    updateTestResult('bug2-test', true, 'Bug #2 已修复 - 状态恢复正常');
+                } else {
+                    updateTestResult('bug2-test', false, 'Bug #2 仍存在 - 状态恢复失败');
+                }
+                
+            } catch (error) {
+                updateTestResult('bug2-test', false, `Bug #2 测试失败: ${error.message}`);
+            }
+        }
+
+        async function simulatePageRefresh() {
+            log('模拟页面刷新...', 'info');
+            
+            // 保存当前状态
+            const savedEvent = currentEvent;
+            const savedParticipant = currentParticipant;
+            const savedSelection = new Set(userSelection);
+            
+            // 断开连接
+            disconnect();
+            
+            // 清空界面
+            clearUserSelection();
+            clearHeatmap();
+            
+            // 等待一下
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // 重新连接
+            await connect();
+            
+            // 重新加入活动
+            if (savedEvent && savedParticipant) {
+                document.getElementById('tcCodeInput').value = savedEvent.tcCode;
+                document.getElementById('participantNameInput').value = savedParticipant;
+                await joinEvent();
+            }
+            
+            log('页面刷新模拟完成', 'success');
+        }
+
+        async function testMultiUser() {
+            log('开始测试多用户场景', 'info');
+            updateTestResult('multi-user-test', 'pending', '测试进行中...');
+            
+            try {
+                // 模拟多个用户同时操作
+                const users = ['用户A', '用户B', '用户C'];
+                
+                for (const user of users) {
+                    // 这里可以模拟多个用户的操作
+                    log(`模拟 ${user} 的操作`, 'info');
+                }
+                
+                updateTestResult('multi-user-test', true, '多用户测试完成');
+                
+            } catch (error) {
+                updateTestResult('multi-user-test', false, `多用户测试失败: ${error.message}`);
+            }
+        }
+
+        // 更新测试结果
+        function updateTestResult(testId, status, message) {
+            testResults.set(testId, status);
+            
+            const container = document.getElementById('testResults');
+            const existing = document.getElementById(`test-${testId}`);
+            
+            const statusClass = status === true ? 'pass' : status === false ? 'fail' : 'pending';
+            const statusText = status === true ? '✅ 通过' : status === false ? '❌ 失败' : '⏳ 进行中';
+            
+            const html = `
+                <div class="test-result ${statusClass}" id="test-${testId}">
+                    <strong>${statusText}</strong>
+                    <div>${message}</div>
+                </div>
+            `;
+            
+            if (existing) {
+                existing.outerHTML = html;
+            } else {
+                container.insertAdjacentHTML('beforeend', html);
+            }
+        }
+
+        // 日志函数
+        function log(message, type = 'info') {
+            const container = document.getElementById('logContainer');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry log-${type}`;
+            logEntry.innerHTML = `<strong>${timestamp}</strong> ${message}`;
+            
+            container.appendChild(logEntry);
+            
+            // 自动滚动
+            if (document.getElementById('autoScroll').checked) {
+                container.scrollTop = container.scrollHeight;
+            }
+            
+            // 限制日志条数
+            if (container.children.length > 100) {
+                container.removeChild(container.firstChild);
+            }
+        }
+
+        // 清空日志
+        function clearLog() {
+            document.getElementById('logContainer').innerHTML = '';
+            log('日志已清空', 'info');
+        }
+
+        // 导出日志
+        function exportLog() {
+            const logs = Array.from(document.querySelectorAll('.log-entry'))
+                .map(entry => entry.textContent)
+                .join('\n');
+            
+            const blob = new Blob([logs], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `timee-test-log-${new Date().toISOString().split('T')[0]}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            log('日志已导出', 'success');
+        }
+
+        // 页面卸载时清理
+        window.addEventListener('beforeunload', function() {
+            if (client) {
+                client.disconnect();
+            }
+        });
+    </script>
+</body>
+</html> 

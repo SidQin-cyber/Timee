@@ -1,5 +1,5 @@
-# 多阶段构建：构建阶段
-FROM node:18-alpine AS builder
+# 多阶段构建 Dockerfile - Timee API Express + Prisma
+FROM node:18-alpine AS base
 
 # 设置工作目录
 WORKDIR /app
@@ -7,54 +7,49 @@ WORKDIR /app
 # 复制 package 文件
 COPY package*.json ./
 
-# 安装依赖（包括开发依赖）
-RUN npm ci
+# 安装所有依赖（包括 dev dependencies 用于 Prisma）
+RUN npm ci --only=production --silent && \
+    npm ci --only=development --silent
 
-# 复制源代码和配置文件
-COPY . .
+# 复制 Prisma schema
+COPY prisma ./prisma/
 
 # 生成 Prisma 客户端
 RUN npx prisma generate
 
-# 构建应用
-RUN npm run build
-
-# 生产阶段
+# 第二阶段：生产环境
 FROM node:18-alpine AS production
 
-# 安装 curl 用于健康检查
-RUN apk add --no-cache curl
+# 设置环境变量
+ENV NODE_ENV=production
+ENV PORT=3000
 
 # 创建非 root 用户
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nestjs -u 1001
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S timee -u 1001
 
 # 设置工作目录
 WORKDIR /app
 
-# 复制 package 文件
-COPY package*.json ./
+# 复制必要文件
+COPY --from=base /app/node_modules ./node_modules
+COPY --from=base /app/package*.json ./
+COPY services ./services/
+COPY src ./src/
+COPY prisma ./prisma/
 
-# 只安装生产依赖
-RUN npm ci --only=production && npm cache clean --force
-
-# 复制构建结果
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/prisma ./prisma
-
-# 设置文件权限
-RUN chown -R nestjs:nodejs /app
+# 设置正确的所有权
+RUN chown -R timee:nodejs /app
 
 # 切换到非 root 用户
-USER nestjs
+USER timee
 
 # 暴露端口
 EXPOSE 3000
 
 # 健康检查
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:3000/api/health || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:3000/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
 
-# 启动应用
-CMD ["node", "dist/main.js"] 
+# 启动命令
+CMD ["node", "src/index.js"] 

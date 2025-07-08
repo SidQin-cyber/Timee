@@ -4,6 +4,5 @@ export declare class AppController {
     constructor(appService: AppService);
     getHello(): string;
     getHealth(): object;
-    getRootEvents(): string;
     getStatus(): object;
 }

@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试事件 tc-538518 实时同步</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        .event-info {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-left: 4px solid #007bff;
+        }
+        .status-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .status-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            border-left: 4px solid #6c757d;
+        }
+        .status-card.success {
+            border-left-color: #28a745;
+            background: #d4edda;
+        }
+        .status-card.error {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+        .test-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #e9ecef;
+            border-radius: 8px;
+        }
+        .test-btn {
+            background: #17a2b8;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 1em;
+        }
+        .test-btn:hover {
+            background: #138496;
+        }
+        .test-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .test-result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 6px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+        }
+        .participant-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .participant-form input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1em;
+        }
+        .log-section {
+            margin-top: 30px;
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .log-entry {
+            margin: 2px 0;
+            padding: 2px 0;
+        }
+        .log-entry.info {
+            color: #4fd1c7;
+        }
+        .log-entry.success {
+            color: #68d391;
+        }
+        .log-entry.error {
+            color: #fc8181;
+        }
+        .log-entry.warning {
+            color: #f6e05e;
+        }
+        .participants-list {
+            background: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid #dee2e6;
+        }
+        .participant-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+        .responses-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+        .response-item {
+            background: #f8f9fa;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 测试事件 tc-538518 实时同步</h1>
+        
+        <div class="event-info">
+            <h3>📅 事件信息</h3>
+            <div id="event-details">加载中...</div>
+        </div>
+        
+        <div class="status-section">
+            <div class="status-card" id="websocket-status">
+                <h4>🔌 WebSocket状态</h4>
+                <div id="ws-status">未连接</div>
+            </div>
+            
+            <div class="status-card" id="participants-status">
+                <h4>👥 参与者数量</h4>
+                <div id="participants-count">0</div>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🧪 测试操作</h3>
+            
+            <div class="participant-form">
+                <input type="text" id="participant-name" placeholder="参与者姓名" value="测试用户">
+                <input type="text" id="participant-initials" placeholder="缩写" value="测试">
+                <button class="test-btn" onclick="simulateParticipant()">模拟参与</button>
+            </div>
+            
+            <button class="test-btn" onclick="loadEventData()">🔄 重新加载事件数据</button>
+            <button class="test-btn" onclick="testWebSocketConnection()">🔌 测试WebSocket连接</button>
+            <button class="test-btn" onclick="loadResponses()">📋 加载响应数据</button>
+            <button class="test-btn" onclick="clearLogs()">🧹 清除日志</button>
+            
+            <div id="test-results"></div>
+        </div>
+        
+        <div class="participants-list">
+            <h3>👥 当前参与者列表</h3>
+            <div id="participants-list">暂无参与者</div>
+        </div>
+        
+        <div class="responses-section">
+            <h3>📋 响应数据</h3>
+            <div id="responses-list">暂无响应数据</div>
+        </div>
+        
+        <div class="log-section">
+            <h3>📝 实时日志</h3>
+            <div id="log-content"></div>
+        </div>
+    </div>
+
+    <script>
+        const eventId = 'tc-538518';
+        const baseUrl = 'http://localhost:3000';
+        const wsUrl = 'ws://localhost:3000';
+        let socket = null;
+        let eventData = null;
+        let participants = [];
+        let responses = [];
+
+        function log(message, type = 'info') {
+            const logContent = document.getElementById('log-content');
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${timestamp}] ${message}`;
+            logContent.appendChild(entry);
+            logContent.scrollTop = logContent.scrollHeight;
+        }
+
+        function clearLogs() {
+            document.getElementById('log-content').innerHTML = '';
+        }
+
+        async function loadEventData() {
+            try {
+                log('正在加载事件数据...', 'info');
+                const response = await fetch(`${baseUrl}/api/events/${eventId}`);
+                
+                if (response.ok) {
+                    eventData = await response.json();
+                    log('事件数据加载成功', 'success');
+                    
+                    document.getElementById('event-details').innerHTML = `
+                        <strong>标题:</strong> ${eventData.title}<br>
+                        <strong>ID:</strong> ${eventData.id}<br>
+                        <strong>开始日期:</strong> ${new Date(eventData.startDate).toLocaleDateString()}<br>
+                        <strong>结束日期:</strong> ${new Date(eventData.endDate).toLocaleDateString()}<br>
+                        <strong>时间范围:</strong> ${eventData.startTime} - ${eventData.endTime}<br>
+                        <strong>包含时间:</strong> ${eventData.includeTime ? '是' : '否'}<br>
+                        <strong>创建时间:</strong> ${new Date(eventData.createdAt).toLocaleString()}
+                    `;
+                } else {
+                    log(`加载事件数据失败: ${response.status} ${response.statusText}`, 'error');
+                }
+            } catch (error) {
+                log(`加载事件数据异常: ${error.message}`, 'error');
+            }
+        }
+
+        async function loadResponses() {
+            try {
+                log('正在加载响应数据...', 'info');
+                const response = await fetch(`${baseUrl}/api/responses/event/${eventId}`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    responses = data;
+                    log(`加载到 ${responses.length} 条响应数据`, 'success');
+                    
+                    updateParticipantsList();
+                    updateResponsesList();
+                } else {
+                    log(`加载响应数据失败: ${response.status}`, 'error');
+                    responses = [];
+                    updateParticipantsList();
+                    updateResponsesList();
+                }
+            } catch (error) {
+                log(`加载响应数据异常: ${error.message}`, 'error');
+            }
+        }
+
+        function updateParticipantsList() {
+            const participantsList = document.getElementById('participants-list');
+            const participantsCount = document.getElementById('participants-count');
+            
+            if (responses.length === 0) {
+                participantsList.innerHTML = '<div class="participant-item">暂无参与者</div>';
+                participantsCount.textContent = '0';
+                return;
+            }
+            
+            participantsList.innerHTML = responses.map(response => `
+                <div class="participant-item">
+                    <div>
+                        <strong>${response.participantName}</strong> (${response.userInitials})
+                        <br>
+                        <small>选择了 ${response.availableSlots ? response.availableSlots.length : 0} 个时间段</small>
+                    </div>
+                    <div>
+                        <small>${new Date(response.createdAt).toLocaleString()}</small>
+                    </div>
+                </div>
+            `).join('');
+            
+            participantsCount.textContent = responses.length;
+        }
+
+        function updateResponsesList() {
+            const responsesList = document.getElementById('responses-list');
+            
+            if (responses.length === 0) {
+                responsesList.innerHTML = '<div class="response-item">暂无响应数据</div>';
+                return;
+            }
+            
+            responsesList.innerHTML = responses.map(response => `
+                <div class="response-item">
+                    <h4>${response.participantName} (${response.userInitials})</h4>
+                    <p><strong>选择模式:</strong> ${response.paintMode}</p>
+                    <p><strong>时区:</strong> ${response.timezone}</p>
+                    <p><strong>可用时间段:</strong> ${response.availableSlots ? response.availableSlots.length : 0} 个</p>
+                    <p><strong>创建时间:</strong> ${new Date(response.createdAt).toLocaleString()}</p>
+                    ${response.availableSlots && response.availableSlots.length > 0 ? `
+                        <details>
+                            <summary>查看详细时间段</summary>
+                            <pre>${JSON.stringify(response.availableSlots, null, 2)}</pre>
+                        </details>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        function testWebSocketConnection() {
+            if (socket) {
+                log('关闭现有WebSocket连接', 'info');
+                socket.close();
+            }
+            
+            try {
+                log('尝试连接WebSocket...', 'info');
+                socket = new WebSocket(wsUrl);
+                
+                socket.onopen = function() {
+                    log('WebSocket连接成功', 'success');
+                    document.getElementById('ws-status').textContent = '已连接';
+                    document.getElementById('websocket-status').className = 'status-card success';
+                    
+                    // 加入事件房间
+                    socket.send(JSON.stringify({
+                        type: 'join-event',
+                        eventId: eventId
+                    }));
+                    log(`发送加入事件房间消息: ${eventId}`, 'info');
+                };
+                
+                socket.onmessage = function(event) {
+                    try {
+                        const data = JSON.parse(event.data);
+                        log(`收到WebSocket消息: ${data.type || 'unknown'}`, 'info');
+                        
+                        if (data.type === 'response_created') {
+                            log('收到新的响应创建通知', 'success');
+                            loadResponses(); // 重新加载响应数据
+                        } else if (data.type === 'participants_updated') {
+                            log(`参与者列表更新: ${data.count} 人`, 'success');
+                            // 更新参与者数量
+                            document.getElementById('participants-count').textContent = data.count;
+                        }
+                    } catch (error) {
+                        log(`解析WebSocket消息失败: ${error.message}`, 'error');
+                    }
+                };
+                
+                socket.onerror = function(error) {
+                    log('WebSocket连接错误', 'error');
+                    document.getElementById('ws-status').textContent = '连接错误';
+                    document.getElementById('websocket-status').className = 'status-card error';
+                };
+                
+                socket.onclose = function() {
+                    log('WebSocket连接关闭', 'warning');
+                    document.getElementById('ws-status').textContent = '已断开';
+                    document.getElementById('websocket-status').className = 'status-card';
+                };
+                
+            } catch (error) {
+                log(`WebSocket连接异常: ${error.message}`, 'error');
+            }
+        }
+
+        async function simulateParticipant() {
+            const participantName = document.getElementById('participant-name').value;
+            const participantInitials = document.getElementById('participant-initials').value;
+            
+            if (!participantName || !participantInitials) {
+                log('请填写参与者姓名和缩写', 'error');
+                return;
+            }
+            
+            try {
+                log(`模拟参与者: ${participantName} (${participantInitials})`, 'info');
+                
+                // 模拟选择一些时间段
+                const availableSlots = [
+                    { date: "7/7", time: "10:00", type: "available", dateIndex: 0, timeIndex: 4 },
+                    { date: "7/7", time: "11:00", type: "available", dateIndex: 0, timeIndex: 8 },
+                    { date: "7/8", time: "14:00", type: "available", dateIndex: 1, timeIndex: 20 }
+                ];
+                
+                const responseData = {
+                    eventId: eventId,
+                    participantName: participantName,
+                    userInitials: participantInitials,
+                    paintMode: 'available',
+                    timezone: 'UTC+8',
+                    availableSlots: availableSlots
+                };
+                
+                const response = await fetch(`${baseUrl}/api/responses`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(responseData)
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`参与者响应创建成功: ${data.id}`, 'success');
+                    
+                    // 自动重新加载响应数据
+                    setTimeout(() => loadResponses(), 1000);
+                } else {
+                    const errorText = await response.text();
+                    log(`创建参与者响应失败: ${response.status} - ${errorText}`, 'error');
+                }
+            } catch (error) {
+                log(`模拟参与者异常: ${error.message}`, 'error');
+            }
+        }
+
+        // 页面加载时初始化
+        window.onload = function() {
+            log('页面加载完成，开始初始化', 'info');
+            loadEventData();
+            loadResponses();
+            testWebSocketConnection();
+        };
+
+        // 页面关闭时清理
+        window.onbeforeunload = function() {
+            if (socket) {
+                socket.close();
+            }
+        };
+    </script>
+</body>
+</html> 

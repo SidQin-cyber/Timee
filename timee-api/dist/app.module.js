@@ -9,13 +9,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppModule = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
-const serve_static_1 = require("@nestjs/serve-static");
-const path_1 = require("path");
 const app_controller_1 = require("./app.controller");
 const app_service_1 = require("./app.service");
 const prisma_module_1 = require("./prisma/prisma.module");
 const events_module_1 = require("./events/events.module");
 const responses_module_1 = require("./responses/responses.module");
+const gateway_module_1 = require("./gateway/gateway.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -25,13 +24,10 @@ exports.AppModule = AppModule = __decorate([
             config_1.ConfigModule.forRoot({
                 isGlobal: true,
             }),
-            serve_static_1.ServeStaticModule.forRoot({
-                rootPath: (0, path_1.join)(__dirname, '..', 'public'),
-                exclude: ['/api*'],
-            }),
             prisma_module_1.PrismaModule,
             events_module_1.EventsModule,
             responses_module_1.ResponsesModule,
+            gateway_module_1.GatewayModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

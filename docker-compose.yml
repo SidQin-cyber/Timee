@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  timee-app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:Qinguoqg123@timee-postgresql:5432/timee_db
+      - JWT_SECRET=TQ9tZLylPmuJrSqfD4RmkJDUO+TtcjlpRckSuEjf9DM=
+      - CORS_ORIGIN=https://timee.group
+    depends_on:
+      - timee-postgresql
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+
+  timee-postgresql:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=timee_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=Qinguoqg123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data: 

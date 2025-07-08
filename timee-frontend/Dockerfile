@@ -23,7 +23,7 @@ FROM nginx:alpine AS production
 RUN apk add --no-cache curl
 
 # 复制构建结果到 nginx
-COPY --from=builder /app/dist /usr/share/nginx/html
+COPY --from=builder /app/apps/web/dist /usr/share/nginx/html
 
 # 复制 nginx 配置
 COPY nginx.conf /etc/nginx/nginx.conf

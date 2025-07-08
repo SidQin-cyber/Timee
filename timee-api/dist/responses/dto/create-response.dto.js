@@ -8,24 +8,16 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CreateResponseDto = exports.PaintMode = void 0;
+exports.CreateResponseDto = void 0;
 const class_validator_1 = require("class-validator");
-var PaintMode;
-(function (PaintMode) {
-    PaintMode["AVAILABLE"] = "available";
-    PaintMode["UNAVAILABLE"] = "unavailable";
-})(PaintMode || (exports.PaintMode = PaintMode = {}));
+const client_1 = require("@prisma/client");
 class CreateResponseDto {
-    constructor() {
-        this.paintMode = PaintMode.AVAILABLE;
-        this.timezone = 'UTC+8';
-        this.availableSlots = [];
-    }
 }
 exports.CreateResponseDto = CreateResponseDto;
 __decorate([
-    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsUUID)(),
     __metadata("design:type", String)
 ], CreateResponseDto.prototype, "eventId", void 0);
 __decorate([
@@ -33,27 +25,38 @@ __decorate([
     __metadata("design:type", String)
 ], CreateResponseDto.prototype, "participantName", void 0);
 __decorate([
+    (0, class_validator_1.IsEmail)(),
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateResponseDto.prototype, "participantEmail", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], CreateResponseDto.prototype, "userInitials", void 0);
 __decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsEnum)(PaintMode),
-    __metadata("design:type", String)
-], CreateResponseDto.prototype, "paintMode", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], CreateResponseDto.prototype, "timezone", void 0);
 __decorate([
-    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Array)
+], CreateResponseDto.prototype, "availability", void 0);
+__decorate([
+    (0, class_validator_1.IsEnum)(client_1.PaintMode),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", typeof (_a = typeof client_1.PaintMode !== "undefined" && client_1.PaintMode) === "function" ? _a : Object)
+], CreateResponseDto.prototype, "paintMode", void 0);
+__decorate([
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Array)
 ], CreateResponseDto.prototype, "availableSlots", void 0);
+__decorate([
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Array)
+], CreateResponseDto.prototype, "timestampArray", void 0);
 //# sourceMappingURL=create-response.dto.js.map

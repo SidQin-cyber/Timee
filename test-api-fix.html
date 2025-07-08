@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API修复测试 - tc-819750</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #6c757d; cursor: not-allowed; }
+        
+        .log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        
+        .participant-list {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        
+        .participant-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .participant-item:last-child {
+            border-bottom: none;
+        }
+        
+        .participant-name {
+            font-weight: bold;
+            color: #495057;
+        }
+        
+        .participant-slots {
+            font-size: 12px;
+            color: #6c757d;
+        }
+        
+        .auto-refresh {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        
+        .refresh-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #28a745;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .test-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 API修复测试 - tc-819750</h1>
+        <p>测试paintMode格式修复是否生效</p>
+        
+        <div class="auto-refresh">
+            <div class="refresh-indicator"></div>
+            <span>自动刷新参与者数据 (每2秒)</span>
+            <button id="toggleRefresh">暂停</button>
+        </div>
+        
+        <div class="test-actions">
+            <button id="testUser1">添加用户1 (Sid)</button>
+            <button id="testUser2">添加用户2 (Alice)</button>
+            <button id="clearAll">清空所有数据</button>
+            <button id="manualRefresh">手动刷新</button>
+        </div>
+        
+        <div id="status" class="status info">
+            等待测试...
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>📊 参与者状态</h2>
+        <div id="participantCount" class="status info">
+            参与者数量: 0
+        </div>
+        <div id="participantList" class="participant-list">
+            <div class="participant-item">
+                <span class="participant-name">暂无参与者</span>
+                <span class="participant-slots">-</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>📝 操作日志</h2>
+        <div id="log" class="log">测试开始...\n</div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000/api';
+        const EVENT_ID = 'tc-819750';
+        
+        let refreshInterval;
+        let isRefreshing = true;
+        
+        // 日志函数
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logElement = document.getElementById('log');
+            logElement.textContent += `[${timestamp}] ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+        
+        // 显示状态
+        function showStatus(message, type = 'info') {
+            const statusElement = document.getElementById('status');
+            statusElement.textContent = message;
+            statusElement.className = `status ${type}`;
+        }
+        
+        // 获取参与者数据
+        async function fetchParticipants() {
+            try {
+                const response = await fetch(`${API_BASE}/responses/event/${EVENT_ID}`);
+                const data = await response.json();
+                
+                // 更新参与者数量
+                document.getElementById('participantCount').textContent = `参与者数量: ${data.length}`;
+                
+                // 更新参与者列表
+                const listElement = document.getElementById('participantList');
+                
+                if (data.length === 0) {
+                    listElement.innerHTML = `
+                        <div class="participant-item">
+                            <span class="participant-name">暂无参与者</span>
+                            <span class="participant-slots">-</span>
+                        </div>
+                    `;
+                } else {
+                    listElement.innerHTML = data.map(participant => {
+                        const slots = participant.availableSlots || [];
+                        return `
+                            <div class="participant-item">
+                                <span class="participant-name">${participant.participantName}</span>
+                                <span class="participant-slots">${slots.length} 个时间段</span>
+                            </div>
+                        `;
+                    }).join('');
+                }
+                
+                log(`✅ 获取参与者数据成功: ${data.length} 人`);
+                return data;
+                
+            } catch (error) {
+                log(`❌ 获取参与者数据失败: ${error.message}`);
+                showStatus('获取数据失败', 'error');
+                return [];
+            }
+        }
+        
+        // 添加测试用户
+        async function addTestUser(userName, userInitials) {
+            try {
+                showStatus(`正在添加用户 ${userName}...`, 'info');
+                
+                const testData = {
+                    eventId: EVENT_ID,
+                    participantName: userName,
+                    userInitials: userInitials,
+                    paintMode: 'available', // 使用小写格式
+                    timezone: 'UTC+8',
+                    availableSlots: [
+                        JSON.stringify({
+                            date: '2025-07-08',
+                            time: '10:00',
+                            dateIndex: 0,
+                            timeIndex: 2,
+                            type: 'available'
+                        }),
+                        JSON.stringify({
+                            date: '2025-07-08',
+                            time: '11:00',
+                            dateIndex: 0,
+                            timeIndex: 3,
+                            type: 'available'
+                        })
+                    ]
+                };
+                
+                const response = await fetch(`${API_BASE}/responses`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testData)
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    log(`✅ 用户 ${userName} 添加成功: ${result.id}`);
+                    showStatus(`用户 ${userName} 添加成功`, 'success');
+                    await fetchParticipants();
+                } else {
+                    const error = await response.json();
+                    log(`❌ 用户 ${userName} 添加失败: ${error.message}`);
+                    showStatus(`用户 ${userName} 添加失败`, 'error');
+                }
+                
+            } catch (error) {
+                log(`❌ 添加用户 ${userName} 时发生错误: ${error.message}`);
+                showStatus(`添加用户失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // 清空所有数据
+        async function clearAllData() {
+            try {
+                showStatus('正在清空所有数据...', 'info');
+                
+                const participants = await fetchParticipants();
+                
+                for (const participant of participants) {
+                    try {
+                        const response = await fetch(`${API_BASE}/responses/${participant.id}`, {
+                            method: 'DELETE'
+                        });
+                        
+                        if (response.ok) {
+                            log(`✅ 删除用户 ${participant.participantName} 成功`);
+                        } else {
+                            log(`❌ 删除用户 ${participant.participantName} 失败`);
+                        }
+                    } catch (error) {
+                        log(`❌ 删除用户 ${participant.participantName} 时发生错误: ${error.message}`);
+                    }
+                }
+                
+                showStatus('数据清空完成', 'success');
+                await fetchParticipants();
+                
+            } catch (error) {
+                log(`❌ 清空数据时发生错误: ${error.message}`);
+                showStatus(`清空数据失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // 切换自动刷新
+        function toggleRefresh() {
+            const button = document.getElementById('toggleRefresh');
+            
+            if (isRefreshing) {
+                clearInterval(refreshInterval);
+                button.textContent = '开始';
+                isRefreshing = false;
+                log('⏸️ 自动刷新已暂停');
+            } else {
+                startAutoRefresh();
+                button.textContent = '暂停';
+                isRefreshing = true;
+                log('▶️ 自动刷新已开始');
+            }
+        }
+        
+        // 开始自动刷新
+        function startAutoRefresh() {
+            refreshInterval = setInterval(() => {
+                fetchParticipants();
+            }, 2000);
+        }
+        
+        // 事件监听器
+        document.getElementById('testUser1').addEventListener('click', () => {
+            addTestUser('Sid', 'S');
+        });
+        
+        document.getElementById('testUser2').addEventListener('click', () => {
+            addTestUser('Alice', 'A');
+        });
+        
+        document.getElementById('clearAll').addEventListener('click', clearAllData);
+        
+        document.getElementById('manualRefresh').addEventListener('click', fetchParticipants);
+        
+        document.getElementById('toggleRefresh').addEventListener('click', toggleRefresh);
+        
+        // 初始化
+        log('🚀 测试页面初始化完成');
+        fetchParticipants();
+        startAutoRefresh();
+    </script>
+</body>
+</html> 

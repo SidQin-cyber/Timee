@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新架构测试 - Bug修复验证</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            background: #fafafa;
+        }
+        .test-section h2 {
+            color: #444;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .status {
+            padding: 5px 10px;
+            border-radius: 15px;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status.success { background: #4CAF50; }
+        .status.error { background: #f44336; }
+        .status.warning { background: #ff9800; }
+        .status.info { background: #2196F3; }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .panel {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+        }
+        .panel h3 {
+            color: #555;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+        .button:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+        }
+        .button.secondary {
+            background: #6c757d;
+        }
+        .button.danger {
+            background: #dc3545;
+        }
+        .button.success {
+            background: #28a745;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: bold;
+        }
+        .input-group input, .input-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .log {
+            background: #1e1e1e;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+        .heatmap {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 5px;
+            margin-top: 15px;
+        }
+        .time-slot {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 8px 4px;
+            text-align: center;
+            font-size: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .time-slot.available {
+            background: #4CAF50;
+            color: white;
+        }
+        .time-slot.occupied {
+            background: #ff9800;
+            color: white;
+        }
+        .time-slot.conflict {
+            background: #f44336;
+            color: white;
+        }
+        .participant-list {
+            margin-top: 15px;
+        }
+        .participant {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin-bottom: 5px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+        }
+        .participant.online {
+            border-left-color: #28a745;
+        }
+        .participant-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #667eea;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        .websocket-status {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            display: inline-block;
+        }
+        .websocket-status.connected {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .websocket-status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .websocket-status.connecting {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 新架构测试 - Bug修复验证</h1>
+            <p>测试新的后端架构是否解决了双用户实时同步和状态恢复问题</p>
+            <div id="websocket-status" class="websocket-status disconnected">WebSocket: 未连接</div>
+        </div>
+
+        <!-- Bug #1 测试：双用户实时同步 -->
+        <div class="test-section">
+            <h2>
+                🔄 Bug #1 测试：双用户实时同步
+                <span id="sync-status" class="status info">待测试</span>
+            </h2>
+            <p><strong>测试目标：</strong>验证用户A的操作能否立即在用户B的界面中同步显示，不需要等待用户离开或刷新。</p>
+            
+            <div class="grid">
+                <!-- 左侧：用户操作面板 -->
+                <div class="panel">
+                    <h3>👤 用户操作面板</h3>
+                    <div class="input-group">
+                        <label>事件代码 (T-Code)</label>
+                        <input type="text" id="tcCode" value="TEST01" placeholder="输入事件代码">
+                    </div>
+                    <div class="input-group">
+                        <label>用户名</label>
+                        <input type="text" id="userName" value="TestUser" placeholder="输入用户名">
+                    </div>
+                    <div class="input-group">
+                        <label>用户邮箱</label>
+                        <input type="email" id="userEmail" value="test@example.com" placeholder="输入邮箱">
+                    </div>
+                    
+                    <button class="button" onclick="joinRoom()">🚪 加入房间</button>
+                    <button class="button secondary" onclick="leaveRoom()">🚪 离开房间</button>
+                    <button class="button success" onclick="submitResponse()">✅ 提交时间选择</button>
+                    <button class="button danger" onclick="clearResponse()">🗑️ 清除选择</button>
+                    
+                    <h4 style="margin-top: 20px;">我的时间选择</h4>
+                    <div id="myTimeSlots" class="heatmap">
+                        <!-- 时间段将通过 JavaScript 生成 -->
+                    </div>
+                </div>
+
+                <!-- 右侧：实时热力图 -->
+                <div class="panel">
+                    <h3>🔥 实时热力图 (应立即更新)</h3>
+                    <p>当其他用户操作时，这里应该<strong>立即</strong>显示更新，无需刷新页面。</p>
+                    
+                    <div id="heatmap" class="heatmap">
+                        <!-- 热力图将通过 JavaScript 生成 -->
+                    </div>
+                    
+                    <div class="participant-list">
+                        <h4>在线参与者</h4>
+                        <div id="participants">
+                            <!-- 参与者列表将通过 JavaScript 生成 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bug #2 测试：状态恢复 -->
+        <div class="test-section">
+            <h2>
+                🔄 Bug #2 测试：状态恢复
+                <span id="recovery-status" class="status info">待测试</span>
+            </h2>
+            <p><strong>测试目标：</strong>验证页面刷新或重新进入房间后，用户的个人状态能否正确恢复，且不会损坏热力图。</p>
+            
+            <div class="grid">
+                <div class="panel">
+                    <h3>💾 状态恢复测试</h3>
+                    <button class="button" onclick="saveCurrentState()">💾 保存当前状态</button>
+                    <button class="button secondary" onclick="simulateRefresh()">🔄 模拟页面刷新</button>
+                    <button class="button success" onclick="recoverState()">📥 恢复个人状态</button>
+                    <button class="button" onclick="validateRoomData()">✅ 验证房间数据</button>
+                </div>
+                
+                <div class="panel">
+                    <h3>📊 状态对比</h3>
+                    <div id="stateComparison">
+                        <div><strong>刷新前状态：</strong><span id="stateBefore">未保存</span></div>
+                        <div><strong>刷新后状态：</strong><span id="stateAfter">未恢复</span></div>
+                        <div><strong>状态匹配：</strong><span id="stateMatch">-</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 实时日志 -->
+        <div class="test-section">
+            <h2>📝 实时日志</h2>
+            <div id="log" class="log">
+                === 新架构测试日志 ===\n
+                准备开始测试...\n
+            </div>
+            <button class="button secondary" onclick="clearLog()">🗑️ 清除日志</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
+    <script>
+        // 全局变量
+        let socket = null;
+        let currentEventId = null;
+        let currentUserName = null;
+        let mySelectedSlots = new Set();
+        let savedState = null;
+        
+        const API_BASE = 'http://localhost:3000/api';
+        const WS_URL = 'http://localhost:3000';
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            generateTimeSlots();
+            log('页面已加载，准备开始测试');
+        });
+
+        // 日志函数
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logDiv = document.getElementById('log');
+            const prefix = type === 'error' ? '❌' : type === 'success' ? '✅' : type === 'warning' ? '⚠️' : '📝';
+            logDiv.innerHTML += `[${timestamp}] ${prefix} ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '=== 日志已清除 ===\n';
+        }
+
+        // 生成时间段
+        function generateTimeSlots() {
+            const times = [
+                '09:00', '10:00', '11:00', '12:00', '13:00', '14:00',
+                '15:00', '16:00', '17:00', '18:00', '19:00', '20:00'
+            ];
+            
+            const mySlots = document.getElementById('myTimeSlots');
+            const heatmap = document.getElementById('heatmap');
+            
+            mySlots.innerHTML = '';
+            heatmap.innerHTML = '';
+            
+            times.forEach(time => {
+                // 我的时间选择
+                const mySlot = document.createElement('div');
+                mySlot.className = 'time-slot';
+                mySlot.textContent = time;
+                mySlot.dataset.time = time;
+                mySlot.onclick = () => toggleMySlot(time);
+                mySlots.appendChild(mySlot);
+                
+                // 热力图
+                const heatSlot = document.createElement('div');
+                heatSlot.className = 'time-slot';
+                heatSlot.textContent = time;
+                heatSlot.dataset.time = time;
+                heatSlot.dataset.count = '0';
+                heatmap.appendChild(heatSlot);
+            });
+        }
+
+        // 切换我的时间选择
+        function toggleMySlot(time) {
+            const slot = document.querySelector(`#myTimeSlots .time-slot[data-time="${time}"]`);
+            if (mySelectedSlots.has(time)) {
+                mySelectedSlots.delete(time);
+                slot.classList.remove('available');
+                log(`取消选择时间：${time}`);
+            } else {
+                mySelectedSlots.add(time);
+                slot.classList.add('available');
+                log(`选择时间：${time}`);
+            }
+        }
+
+        // WebSocket 连接
+        function connectWebSocket() {
+            if (socket) {
+                socket.disconnect();
+            }
+            
+            updateWebSocketStatus('connecting');
+            log('正在连接 WebSocket...');
+            
+            socket = io(WS_URL, {
+                transports: ['websocket', 'polling']
+            });
+
+            socket.on('connect', () => {
+                updateWebSocketStatus('connected');
+                log('WebSocket 连接成功', 'success');
+            });
+
+            socket.on('disconnect', () => {
+                updateWebSocketStatus('disconnected');
+                log('WebSocket 连接断开', 'warning');
+            });
+
+            socket.on('error', (error) => {
+                log(`WebSocket 错误：${error}`, 'error');
+            });
+
+            // 监听实时更新事件
+            socket.on('response_updated', (data) => {
+                log('收到响应更新通知：' + JSON.stringify(data), 'success');
+                updateSyncStatus('success');
+                if (data.roomData) {
+                    updateHeatmap(data.roomData.heatmapData);
+                    updateParticipants(data.roomData.participants);
+                }
+            });
+
+            socket.on('response_created', (data) => {
+                log('收到响应创建通知：' + JSON.stringify(data), 'success');
+                updateSyncStatus('success');
+            });
+
+            socket.on('user-joined', (data) => {
+                log(`用户 ${data.participantName} 加入了房间`, 'info');
+            });
+
+            socket.on('user-left', (data) => {
+                log(`用户 ${data.participantName} 离开了房间`, 'info');
+            });
+        }
+
+        function updateWebSocketStatus(status) {
+            const statusDiv = document.getElementById('websocket-status');
+            statusDiv.className = `websocket-status ${status}`;
+            statusDiv.textContent = `WebSocket: ${status === 'connected' ? '已连接' : status === 'connecting' ? '连接中' : '未连接'}`;
+        }
+
+        function updateSyncStatus(status) {
+            const statusSpan = document.getElementById('sync-status');
+            statusSpan.className = `status ${status}`;
+            statusSpan.textContent = status === 'success' ? '✅ 同步正常' : status === 'error' ? '❌ 同步失败' : '⏳ 测试中';
+        }
+
+        // 加入房间
+        async function joinRoom() {
+            const tcCode = document.getElementById('tcCode').value;
+            const userName = document.getElementById('userName').value;
+            
+            if (!tcCode || !userName) {
+                log('请输入事件代码和用户名', 'error');
+                return;
+            }
+
+            try {
+                // 首先获取事件信息
+                const eventResponse = await fetch(`${API_BASE}/events/tc/${tcCode}`);
+                if (!eventResponse.ok) {
+                    throw new Error('事件不存在');
+                }
+                
+                const eventData = await eventResponse.json();
+                currentEventId = eventData.data.id;
+                currentUserName = userName;
+                
+                log(`找到事件：${eventData.data.title} (ID: ${currentEventId})`);
+                
+                // 连接 WebSocket
+                if (!socket) {
+                    connectWebSocket();
+                }
+                
+                // 加入房间
+                socket.emit('join-event', {
+                    eventId: currentEventId,
+                    participantName: userName
+                });
+                
+                log(`正在加入房间... 事件：${tcCode}，用户：${userName}`);
+                
+                // 获取房间数据
+                await loadRoomData();
+                
+                // 尝试恢复用户状态
+                await loadUserState();
+                
+            } catch (error) {
+                log(`加入房间失败：${error.message}`, 'error');
+            }
+        }
+
+        // 离开房间
+        function leaveRoom() {
+            if (socket && currentEventId) {
+                socket.emit('leave-event', currentEventId);
+                log('已离开房间');
+            }
+            currentEventId = null;
+            currentUserName = null;
+        }
+
+        // 加载房间数据
+        async function loadRoomData() {
+            if (!currentEventId) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/responses/room/${currentEventId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    log(`加载房间数据成功，参与者：${data.data.participantCount}，响应：${data.data.responseCount}`);
+                    updateHeatmap(data.data.heatmapData);
+                    updateParticipants(data.data.participants);
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (error) {
+                log(`加载房间数据失败：${error.message}`, 'error');
+            }
+        }
+
+        // 加载用户状态
+        async function loadUserState() {
+            if (!currentEventId || !currentUserName) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/responses/user/${currentEventId}/${currentUserName}`);
+                const data = await response.json();
+                
+                if (data.success && data.data && data.data.response) {
+                    const availability = data.data.response.availability;
+                    log(`恢复用户状态：${availability.length} 个时间段`);
+                    
+                    // 清除当前选择
+                    mySelectedSlots.clear();
+                    document.querySelectorAll('#myTimeSlots .time-slot').forEach(slot => {
+                        slot.classList.remove('available');
+                    });
+                    
+                    // 恢复选择
+                    availability.forEach(slot => {
+                        if (slot.time) {
+                            mySelectedSlots.add(slot.time);
+                            const slotElement = document.querySelector(`#myTimeSlots .time-slot[data-time="${slot.time}"]`);
+                            if (slotElement) {
+                                slotElement.classList.add('available');
+                            }
+                        }
+                    });
+                    
+                    updateRecoveryStatus('success');
+                } else {
+                    log('用户暂无保存的状态');
+                }
+            } catch (error) {
+                log(`加载用户状态失败：${error.message}`, 'error');
+                updateRecoveryStatus('error');
+            }
+        }
+
+        // 提交响应
+        async function submitResponse() {
+            if (!currentEventId || !currentUserName) {
+                log('请先加入房间', 'error');
+                return;
+            }
+            
+            if (mySelectedSlots.size === 0) {
+                log('请先选择时间段', 'error');
+                return;
+            }
+            
+            try {
+                const availability = Array.from(mySelectedSlots).map(time => ({
+                    date: '2025-07-07',
+                    time: time
+                }));
+                
+                const response = await fetch(`${API_BASE}/responses`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        eventId: currentEventId,
+                        participantName: currentUserName,
+                        participantEmail: document.getElementById('userEmail').value,
+                        userInitials: currentUserName.charAt(0).toUpperCase(),
+                        timezone: 'Asia/Shanghai',
+                        availability: availability,
+                        paintMode: 'available'
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    log(`提交响应成功，选择了 ${availability.length} 个时间段`, 'success');
+                    // 注意：实时更新应该通过 WebSocket 自动到来
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (error) {
+                log(`提交响应失败：${error.message}`, 'error');
+            }
+        }
+
+        // 清除响应
+        function clearResponse() {
+            mySelectedSlots.clear();
+            document.querySelectorAll('#myTimeSlots .time-slot').forEach(slot => {
+                slot.classList.remove('available');
+            });
+            log('已清除所有时间选择');
+        }
+
+        // 更新热力图
+        function updateHeatmap(heatmapData) {
+            const heatmap = document.getElementById('heatmap');
+            const slots = heatmap.querySelectorAll('.time-slot');
+            
+            // 重置所有slots
+            slots.forEach(slot => {
+                slot.className = 'time-slot';
+                slot.dataset.count = '0';
+            });
+            
+            // 更新数据
+            heatmapData.forEach(data => {
+                const [date, time] = data.slot.split('_');
+                const slot = heatmap.querySelector(`[data-time="${time}"]`);
+                if (slot) {
+                    slot.dataset.count = data.count;
+                    if (data.count > 0) {
+                        slot.classList.add('occupied');
+                        slot.textContent = `${time}\n(${data.count})`;
+                    }
+                }
+            });
+            
+            log(`热力图已更新，包含 ${heatmapData.length} 个数据点`);
+        }
+
+        // 更新参与者列表
+        function updateParticipants(participants) {
+            const container = document.getElementById('participants');
+            container.innerHTML = '';
+            
+            participants.forEach(participant => {
+                const div = document.createElement('div');
+                div.className = `participant ${participant.hasResponse ? 'online' : ''}`;
+                div.innerHTML = `
+                    <div class="participant-info">
+                        <div class="avatar">${participant.initials || participant.name.charAt(0)}</div>
+                        <span>${participant.name}</span>
+                        ${participant.hasResponse ? '<span class="status success">已响应</span>' : '<span class="status warning">未响应</span>'}
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+            
+            log(`参与者列表已更新，共 ${participants.length} 人`);
+        }
+
+        // Bug #2 测试功能
+        function saveCurrentState() {
+            savedState = {
+                selectedSlots: Array.from(mySelectedSlots),
+                eventId: currentEventId,
+                userName: currentUserName,
+                timestamp: Date.now()
+            };
+            document.getElementById('stateBefore').textContent = `已保存 (${savedState.selectedSlots.length} 个时间段)`;
+            log(`保存当前状态：${savedState.selectedSlots.length} 个时间段`, 'success');
+        }
+
+        function simulateRefresh() {
+            // 模拟页面刷新 - 清除客户端状态但保持服务器数据
+            mySelectedSlots.clear();
+            document.querySelectorAll('#myTimeSlots .time-slot').forEach(slot => {
+                slot.classList.remove('available');
+            });
+            document.getElementById('heatmap').innerHTML = '';
+            document.getElementById('participants').innerHTML = '';
+            
+            // 断开 WebSocket
+            if (socket) {
+                socket.disconnect();
+                socket = null;
+            }
+            updateWebSocketStatus('disconnected');
+            
+            log('已模拟页面刷新，客户端状态已清除', 'warning');
+        }
+
+        async function recoverState() {
+            if (!savedState) {
+                log('没有保存的状态可恢复', 'error');
+                return;
+            }
+            
+            // 重新连接
+            currentEventId = savedState.eventId;
+            currentUserName = savedState.userName;
+            document.getElementById('tcCode').value = 'TEST01';
+            document.getElementById('userName').value = savedState.userName;
+            
+            await joinRoom();
+            
+            // 验证状态恢复
+            setTimeout(() => {
+                const recoveredSlots = Array.from(mySelectedSlots);
+                document.getElementById('stateAfter').textContent = `已恢复 (${recoveredSlots.length} 个时间段)`;
+                
+                const isMatch = savedState.selectedSlots.length === recoveredSlots.length &&
+                               savedState.selectedSlots.every(slot => recoveredSlots.includes(slot));
+                
+                document.getElementById('stateMatch').textContent = isMatch ? '✅ 匹配' : '❌ 不匹配';
+                updateRecoveryStatus(isMatch ? 'success' : 'error');
+                
+                log(`状态恢复${isMatch ? '成功' : '失败'}`, isMatch ? 'success' : 'error');
+            }, 2000);
+        }
+
+        async function validateRoomData() {
+            if (!currentEventId) {
+                log('请先加入房间', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/responses/room/${currentEventId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    log(`房间数据验证成功：`, 'success');
+                    log(`- 事件：${data.data.event.title}`);
+                    log(`- 参与者：${data.data.participantCount}`);
+                    log(`- 响应数：${data.data.responseCount}`);
+                    log(`- 热力图数据点：${data.data.heatmapData.length}`);
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (error) {
+                log(`房间数据验证失败：${error.message}`, 'error');
+            }
+        }
+
+        function updateRecoveryStatus(status) {
+            const statusSpan = document.getElementById('recovery-status');
+            statusSpan.className = `status ${status}`;
+            statusSpan.textContent = status === 'success' ? '✅ 恢复成功' : status === 'error' ? '❌ 恢复失败' : '⏳ 测试中';
+        }
+    </script>
+</body>
+</html> 

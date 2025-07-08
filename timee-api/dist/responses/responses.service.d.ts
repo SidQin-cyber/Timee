@@ -1,128 +1,48 @@
 import { PrismaService } from '../prisma/prisma.service';
+import { EventsGateway } from '../gateway/events.gateway';
 import { CreateResponseDto } from './dto/create-response.dto';
 export declare class ResponsesService {
-    private prisma;
-    constructor(prisma: PrismaService);
-    create(createResponseDto: CreateResponseDto): Promise<{
+    private readonly prisma;
+    private readonly eventsGateway;
+    private readonly logger;
+    constructor(prisma: PrismaService, eventsGateway: EventsGateway);
+    createOrUpdateResponse(createResponseDto: CreateResponseDto): Promise<any>;
+    getEventRoomData(eventId: string): Promise<{
         event: {
-            id: string;
-            title: string;
-            startDate: Date;
-            endDate: Date;
+            id: any;
+            tcCode: any;
+            title: any;
+            startDate: any;
+            endDate: any;
+            timezone: any;
         };
-    } & {
-        id: string;
-        eventId: string;
-        participantName: string;
-        participantEmail: string | null;
-        userInitials: string;
-        paintMode: import(".prisma/client").$Enums.PaintMode;
-        timezone: string;
-        availableSlots: import("@prisma/client/runtime/library").JsonValue;
-        createdAt: Date;
-        updatedAt: Date;
+        participants: any;
+        heatmapData: {
+            slot: string;
+            count: number;
+            percentage: number;
+        }[];
+        participantCount: any;
+        responseCount: any;
     }>;
-    findAll(): Promise<({
-        event: {
+    getUserResponse(eventId: string, participantName: string): Promise<{
+        participant: {
             id: string;
-            title: string;
-            startDate: Date;
-            endDate: Date;
-        };
-    } & {
-        id: string;
-        eventId: string;
-        participantName: string;
-        participantEmail: string | null;
-        userInitials: string;
-        paintMode: import(".prisma/client").$Enums.PaintMode;
-        timezone: string;
-        availableSlots: import("@prisma/client/runtime/library").JsonValue;
-        createdAt: Date;
-        updatedAt: Date;
-    })[]>;
-    findOne(id: string): Promise<{
-        event: {
-            id: string;
+            name: string;
+            email: string;
+            initials: string;
             timezone: string;
-            createdAt: Date;
-            updatedAt: Date;
-            title: string;
-            description: string | null;
-            startDate: Date;
-            endDate: Date;
-            startTime: string;
-            endTime: string;
-            eventType: import(".prisma/client").$Enums.EventType;
-            includeTime: boolean;
-            selectedDates: string | null;
-            finalizedSlots: string[];
-            createdBy: string | null;
         };
-    } & {
-        id: string;
-        eventId: string;
-        participantName: string;
-        participantEmail: string | null;
-        userInitials: string;
-        paintMode: import(".prisma/client").$Enums.PaintMode;
-        timezone: string;
-        availableSlots: import("@prisma/client/runtime/library").JsonValue;
-        createdAt: Date;
-        updatedAt: Date;
-    }>;
-    update(id: string, updateResponseDto: Partial<CreateResponseDto>): Promise<{
-        event: {
-            id: string;
-            timezone: string;
-            createdAt: Date;
-            updatedAt: Date;
-            title: string;
-            description: string | null;
-            startDate: Date;
-            endDate: Date;
-            startTime: string;
-            endTime: string;
-            eventType: import(".prisma/client").$Enums.EventType;
-            includeTime: boolean;
-            selectedDates: string | null;
-            finalizedSlots: string[];
-            createdBy: string | null;
+        response: {
+            id: any;
+            availability: any;
+            paintMode: any;
+            version: any;
+            updatedAt: any;
         };
-    } & {
-        id: string;
-        eventId: string;
-        participantName: string;
-        participantEmail: string | null;
-        userInitials: string;
-        paintMode: import(".prisma/client").$Enums.PaintMode;
-        timezone: string;
-        availableSlots: import("@prisma/client/runtime/library").JsonValue;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
-    remove(id: string): Promise<{
-        id: string;
-        eventId: string;
-        participantName: string;
-        participantEmail: string | null;
-        userInitials: string;
-        paintMode: import(".prisma/client").$Enums.PaintMode;
-        timezone: string;
-        availableSlots: import("@prisma/client/runtime/library").JsonValue;
-        createdAt: Date;
-        updatedAt: Date;
-    }>;
-    findByEvent(eventId: string): Promise<{
-        id: string;
-        eventId: string;
-        participantName: string;
-        participantEmail: string | null;
-        userInitials: string;
-        paintMode: import(".prisma/client").$Enums.PaintMode;
-        timezone: string;
-        availableSlots: import("@prisma/client/runtime/library").JsonValue;
-        createdAt: Date;
-        updatedAt: Date;
-    }[]>;
+    private buildHeatmapData;
+    deleteResponse(responseId: string): Promise<any>;
+    findAll(): Promise<any>;
+    findOne(id: string): Promise<any>;
 }

@@ -1,36 +1,21 @@
 
 > timee-api@1.0.0 start:prod
-> node dist/main
+> node src/index.js
 
-[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
-[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPrismaModule dependencies initialized[39m[38;5;3m +19ms[39m
-[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mServeStaticModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mEventsModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mResponsesModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAppController {/api}:[39m[38;5;3m +6ms[39m
-[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api, GET} route[39m[38;5;3m +2ms[39m
-[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/health, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/events, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/status, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mEventsController {/api/events}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/events, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/events, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/events/:id, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/events/:id, PATCH} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/events/:id, DELETE} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/events/:id/responses, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mResponsesController {/api/responses}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/responses, POST} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/responses, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/responses/:id, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/responses/:id, PATCH} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/responses/:id, DELETE} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/responses/event/:eventId, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 2685  - [39m06/17/2025, 2:23:03 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +157ms[39m
-🚀 Server running on http://localhost:3000
-🌐 External access: http://wmxkwzbmhlj.sealoshzh.site/api
-📡 WebSocket server ready
-🔧 CORS enabled for: *
+/home/devbox/project/timee-api/node_modules/pino/lib/transport.js:146
+      throw new Error(`unable to determine transport target for "${origin}"`)
+      ^
+
+Error: unable to determine transport target for "pino-pretty"
+    at fixTarget (/home/devbox/project/timee-api/node_modules/pino/lib/transport.js:146:13)
+    at transport (/home/devbox/project/timee-api/node_modules/pino/lib/transport.js:116:22)
+    at normalizeArgs (/home/devbox/project/timee-api/node_modules/pino/lib/tools.js:316:16)
+    at pino (/home/devbox/project/timee-api/node_modules/pino/pino.js:90:28)
+    at Object.<anonymous> (/home/devbox/project/timee-api/services/roomService.js:6:16)
+    at Module._compile (node:internal/modules/cjs/loader:1546:14)
+    at Object..js (node:internal/modules/cjs/loader:1689:10)
+    at Module.load (node:internal/modules/cjs/loader:1318:32)
+    at Function._load (node:internal/modules/cjs/loader:1128:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:315:14)
+
+Node.js v22.11.0

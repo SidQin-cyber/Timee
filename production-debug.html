@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timee 生产环境调试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .warning { color: #ffc107; }
+        .info { color: #17a2b8; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .log {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+        }
+        .status-item {
+            padding: 15px;
+            border-radius: 4px;
+            border-left: 4px solid #ccc;
+        }
+        .status-ok { border-left-color: #28a745; background: #d4edda; }
+        .status-error { border-left-color: #dc3545; background: #f8d7da; }
+        .status-warning { border-left-color: #ffc107; background: #fff3cd; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Timee 生产环境调试工具</h1>
+        <p>当前域名: <strong id="currentDomain"></strong></p>
+        <p>当前时间: <strong id="currentTime"></strong></p>
+    </div>
+
+    <div class="container">
+        <h2>🔍 系统状态检查</h2>
+        <div class="status-grid" id="statusGrid"></div>
+        <button onclick="checkSystemStatus()">刷新状态</button>
+    </div>
+
+    <div class="container">
+        <h2>🌐 API 连接测试</h2>
+        <div>
+            <button onclick="testAPIConnection()">测试 API 连接</button>
+            <button onclick="testCORS()">测试 CORS 配置</button>
+            <button onclick="testCreateEvent()">测试创建活动</button>
+            <button onclick="testLikeFunction()">测试点赞功能</button>
+        </div>
+        <div class="log" id="apiLog"></div>
+    </div>
+
+    <div class="container">
+        <h2>⚙️ 环境配置检查</h2>
+        <div>
+            <button onclick="checkEnvironmentConfig()">检查环境配置</button>
+            <button onclick="checkNetworkConfig()">检查网络配置</button>
+        </div>
+        <div class="log" id="configLog"></div>
+    </div>
+
+    <div class="container">
+        <h2>🔧 问题诊断</h2>
+        <div>
+            <button onclick="runFullDiagnostic()">运行完整诊断</button>
+            <button onclick="clearLogs()">清除日志</button>
+        </div>
+        <div class="log" id="diagnosticLog"></div>
+    </div>
+
+    <script>
+        // 初始化
+        document.getElementById('currentDomain').textContent = window.location.origin;
+        document.getElementById('currentTime').textContent = new Date().toLocaleString();
+
+        // 日志函数
+        function log(message, type = 'info', logId = 'apiLog') {
+            const logElement = document.getElementById(logId);
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${type.toUpperCase()}: ${message}\n`;
+            logElement.textContent += logEntry;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        function clearLogs() {
+            const logElements = ['apiLog', 'configLog', 'diagnosticLog'];
+            logElements.forEach(id => {
+                document.getElementById(id).textContent = '';
+            });
+        }
+
+        // 系统状态检查
+        async function checkSystemStatus() {
+            const statusGrid = document.getElementById('statusGrid');
+            statusGrid.innerHTML = '';
+
+            const checks = [
+                { name: '浏览器支持', check: () => checkBrowserSupport() },
+                { name: '网络连接', check: () => checkNetworkConnection() },
+                { name: '域名解析', check: () => checkDomainResolution() },
+                { name: 'HTTPS 状态', check: () => checkHTTPS() },
+                { name: '本地存储', check: () => checkLocalStorage() },
+                { name: 'API 可达性', check: () => checkAPIReachability() }
+            ];
+
+            for (const check of checks) {
+                const result = await check.check();
+                const statusItem = document.createElement('div');
+                statusItem.className = `status-item status-${result.status}`;
+                statusItem.innerHTML = `
+                    <strong>${check.name}</strong><br>
+                    ${result.message}
+                `;
+                statusGrid.appendChild(statusItem);
+            }
+        }
+
+        function checkBrowserSupport() {
+            const features = ['fetch', 'Promise', 'localStorage'];
+            const missing = features.filter(f => !window[f]);
+            return {
+                status: missing.length ? 'error' : 'ok',
+                message: missing.length ? `缺少: ${missing.join(', ')}` : '所有功能支持'
+            };
+        }
+
+        async function checkNetworkConnection() {
+            try {
+                const response = await fetch('/health', { method: 'GET' });
+                return {
+                    status: 'ok',
+                    message: `连接正常 (${response.status})`
+                };
+            } catch (error) {
+                return {
+                    status: 'error',
+                    message: `连接失败: ${error.message}`
+                };
+            }
+        }
+
+        function checkDomainResolution() {
+            const domain = window.location.hostname;
+            return {
+                status: 'ok',
+                message: `域名: ${domain}`
+            };
+        }
+
+        function checkHTTPS() {
+            const isHTTPS = window.location.protocol === 'https:';
+            return {
+                status: isHTTPS ? 'ok' : 'warning',
+                message: isHTTPS ? 'HTTPS 已启用' : 'HTTP 连接 (建议使用 HTTPS)'
+            };
+        }
+
+        function checkLocalStorage() {
+            try {
+                localStorage.setItem('test', 'test');
+                localStorage.removeItem('test');
+                return {
+                    status: 'ok',
+                    message: '本地存储可用'
+                };
+            } catch (error) {
+                return {
+                    status: 'error',
+                    message: `本地存储不可用: ${error.message}`
+                };
+            }
+        }
+
+        async function checkAPIReachability() {
+            try {
+                const response = await fetch('/api/health', { method: 'GET' });
+                return {
+                    status: response.ok ? 'ok' : 'error',
+                    message: response.ok ? `API 可达 (${response.status})` : `API 错误 (${response.status})`
+                };
+            } catch (error) {
+                return {
+                    status: 'error',
+                    message: `API 不可达: ${error.message}`
+                };
+            }
+        }
+
+        // API 测试函数
+        async function testAPIConnection() {
+            log('开始测试 API 连接...', 'info');
+            
+            const endpoints = [
+                '/api/health',
+                '/api/events',
+                '/health'
+            ];
+
+            for (const endpoint of endpoints) {
+                try {
+                    log(`测试端点: ${endpoint}`, 'info');
+                    const response = await fetch(endpoint, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    log(`响应状态: ${response.status} ${response.statusText}`, 
+                        response.ok ? 'success' : 'error');
+                    
+                    if (response.ok) {
+                        const data = await response.text();
+                        log(`响应数据: ${data.substring(0, 200)}...`, 'info');
+                    }
+                } catch (error) {
+                    log(`端点 ${endpoint} 测试失败: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        async function testCORS() {
+            log('开始测试 CORS 配置...', 'info');
+            
+            const testOrigins = [
+                window.location.origin,
+                'https://timee.group',
+                'https://wmxkwzbmhflj.sealoshzh.site'
+            ];
+
+            for (const origin of testOrigins) {
+                try {
+                    log(`测试来源: ${origin}`, 'info');
+                    const response = await fetch('/api/health', {
+                        method: 'OPTIONS',
+                        headers: {
+                            'Origin': origin,
+                            'Access-Control-Request-Method': 'GET',
+                            'Access-Control-Request-Headers': 'Content-Type'
+                        }
+                    });
+                    
+                    log(`CORS 预检响应: ${response.status}`, 
+                        response.ok ? 'success' : 'error');
+                    
+                    // 检查 CORS 头
+                    const corsHeaders = [
+                        'Access-Control-Allow-Origin',
+                        'Access-Control-Allow-Methods',
+                        'Access-Control-Allow-Headers'
+                    ];
+                    
+                    corsHeaders.forEach(header => {
+                        const value = response.headers.get(header);
+                        log(`${header}: ${value || '未设置'}`, value ? 'info' : 'warning');
+                    });
+                } catch (error) {
+                    log(`CORS 测试失败: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        async function testCreateEvent() {
+            log('开始测试创建活动功能...', 'info');
+            
+            const testEvent = {
+                title: '测试活动 - ' + new Date().toISOString(),
+                description: '这是一个测试活动',
+                timezone: 'UTC+8',
+                startDate: new Date().toISOString().split('T')[0],
+                endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                startTime: '09:00',
+                endTime: '17:00',
+                eventType: 'group',
+                includeTime: true
+            };
+
+            try {
+                log('发送创建活动请求...', 'info');
+                const response = await fetch('/api/events', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testEvent)
+                });
+
+                log(`创建活动响应: ${response.status} ${response.statusText}`, 
+                    response.ok ? 'success' : 'error');
+
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`创建成功，活动ID: ${data.id}`, 'success');
+                    log(`活动数据: ${JSON.stringify(data, null, 2)}`, 'info');
+                } else {
+                    const errorData = await response.text();
+                    log(`创建失败: ${errorData}`, 'error');
+                }
+            } catch (error) {
+                log(`创建活动请求失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function testLikeFunction() {
+            log('开始测试点赞功能...', 'info');
+            
+            try {
+                // 首先获取最近的活动
+                log('获取最近活动...', 'info');
+                const eventsResponse = await fetch('/api/events');
+                
+                if (!eventsResponse.ok) {
+                    log(`获取活动失败: ${eventsResponse.status}`, 'error');
+                    return;
+                }
+
+                const events = await eventsResponse.json();
+                log(`获取到 ${events.length} 个活动`, 'info');
+
+                if (events.length === 0) {
+                    log('没有活动可以测试点赞功能', 'warning');
+                    return;
+                }
+
+                const testEvent = events[0];
+                log(`测试活动: ${testEvent.title} (ID: ${testEvent.id})`, 'info');
+
+                // 测试点赞功能（这里需要根据你的实际点赞API调整）
+                const likeResponse = await fetch(`/api/events/${testEvent.id}/like`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                log(`点赞响应: ${likeResponse.status} ${likeResponse.statusText}`, 
+                    likeResponse.ok ? 'success' : 'error');
+
+                if (likeResponse.ok) {
+                    const likeData = await likeResponse.json();
+                    log(`点赞成功: ${JSON.stringify(likeData, null, 2)}`, 'success');
+                } else {
+                    const errorData = await likeResponse.text();
+                    log(`点赞失败: ${errorData}`, 'error');
+                }
+            } catch (error) {
+                log(`点赞测试失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function checkEnvironmentConfig() {
+            log('检查环境配置...', 'info', 'configLog');
+            
+            // 检查当前环境
+            const env = {
+                userAgent: navigator.userAgent,
+                language: navigator.language,
+                cookieEnabled: navigator.cookieEnabled,
+                onLine: navigator.onLine,
+                platform: navigator.platform,
+                url: window.location.href,
+                referrer: document.referrer
+            };
+
+            Object.entries(env).forEach(([key, value]) => {
+                log(`${key}: ${value}`, 'info', 'configLog');
+            });
+
+            // 检查环境变量（如果有的话）
+            if (window.process && window.process.env) {
+                log('环境变量:', 'info', 'configLog');
+                Object.entries(window.process.env).forEach(([key, value]) => {
+                    log(`${key}: ${value}`, 'info', 'configLog');
+                });
+            }
+        }
+
+        async function checkNetworkConfig() {
+            log('检查网络配置...', 'info', 'configLog');
+            
+            // 检查网络连接
+            if ('connection' in navigator) {
+                const connection = navigator.connection;
+                log(`连接类型: ${connection.effectiveType}`, 'info', 'configLog');
+                log(`下行速度: ${connection.downlink} Mbps`, 'info', 'configLog');
+                log(`RTT: ${connection.rtt} ms`, 'info', 'configLog');
+            }
+
+            // 检查 DNS 解析
+            const domains = [
+                'timee.group',
+                'wmxkwzbmhflj.sealoshzh.site',
+                window.location.hostname
+            ];
+
+            for (const domain of domains) {
+                try {
+                    const start = Date.now();
+                    await fetch(`https://${domain}/health`, { method: 'HEAD', mode: 'no-cors' });
+                    const end = Date.now();
+                    log(`${domain}: 可达 (${end - start}ms)`, 'success', 'configLog');
+                } catch (error) {
+                    log(`${domain}: 不可达 (${error.message})`, 'error', 'configLog');
+                }
+            }
+        }
+
+        async function runFullDiagnostic() {
+            log('开始运行完整诊断...', 'info', 'diagnosticLog');
+            
+            // 诊断步骤
+            const diagnosticSteps = [
+                { name: '系统状态', func: checkSystemStatus },
+                { name: 'API 连接', func: testAPIConnection },
+                { name: 'CORS 配置', func: testCORS },
+                { name: '环境配置', func: checkEnvironmentConfig },
+                { name: '网络配置', func: checkNetworkConfig }
+            ];
+
+            for (const step of diagnosticSteps) {
+                try {
+                    log(`执行: ${step.name}`, 'info', 'diagnosticLog');
+                    await step.func();
+                    log(`完成: ${step.name}`, 'success', 'diagnosticLog');
+                } catch (error) {
+                    log(`失败: ${step.name} - ${error.message}`, 'error', 'diagnosticLog');
+                }
+            }
+
+            log('完整诊断完成', 'success', 'diagnosticLog');
+        }
+
+        // 页面加载时自动检查系统状态
+        window.addEventListener('load', () => {
+            setTimeout(checkSystemStatus, 1000);
+        });
+    </script>
+</body>
+</html> 

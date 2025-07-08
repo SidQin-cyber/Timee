@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>同步状态检查 - Timee</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8fafc;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .status-item:last-child {
+            border-bottom: none;
+        }
+        .status {
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .status.success {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+        .status.error {
+            background: #fecaca;
+            color: #dc2626;
+        }
+        .status.pending {
+            background: #fef3c7;
+            color: #d97706;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 10px 0;
+            width: 100%;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f9fafb;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Timee 同步状态检查</h1>
+        
+        <div class="status-item">
+            <span>后端API服务</span>
+            <span id="api-status" class="status pending">检查中...</span>
+        </div>
+        
+        <div class="status-item">
+            <span>WebSocket服务</span>
+            <span id="websocket-status" class="status pending">检查中...</span>
+        </div>
+        
+        <div class="status-item">
+            <span>前端WebSocket连接</span>
+            <span id="frontend-ws-status" class="status pending">检查中...</span>
+        </div>
+        
+        <div class="status-item">
+            <span>事件房间功能</span>
+            <span id="room-status" class="status pending">未测试</span>
+        </div>
+        
+        <div class="status-item">
+            <span>实时同步功能</span>
+            <span id="sync-status" class="status pending">未测试</span>
+        </div>
+
+        <button onclick="runFullTest()">🚀 运行完整测试</button>
+
+        <div class="test-section">
+            <h3>测试结果:</h3>
+            <div id="test-results">点击上方按钮开始测试...</div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        let socket = null;
+        
+        function updateStatus(elementId, status, text) {
+            const element = document.getElementById(elementId);
+            element.className = `status ${status}`;
+            element.textContent = text;
+        }
+
+        function logResult(message) {
+            const resultsElement = document.getElementById('test-results');
+            const timestamp = new Date().toLocaleTimeString();
+            resultsElement.innerHTML += `[${timestamp}] ${message}<br>`;
+        }
+
+        async function checkAPIService() {
+            try {
+                const response = await fetch('/api/health', { method: 'GET' });
+                if (response.ok) {
+                    updateStatus('api-status', 'success', '正常');
+                    logResult('✅ 后端API服务正常');
+                    return true;
+                } else {
+                    updateStatus('api-status', 'error', '异常');
+                    logResult(`❌ 后端API服务异常: ${response.status}`);
+                    return false;
+                }
+            } catch (error) {
+                updateStatus('api-status', 'error', '离线');
+                logResult(`❌ 后端API服务离线: ${error.message}`);
+                return false;
+            }
+        }
+
+        async function checkWebSocketService() {
+            try {
+                const response = await fetch('/socket.io/', { method: 'GET' });
+                if (response.status === 400) {
+                    // Socket.IO正常返回400是预期的
+                    updateStatus('websocket-status', 'success', '正常');
+                    logResult('✅ WebSocket服务正常');
+                    return true;
+                } else {
+                    updateStatus('websocket-status', 'error', '异常');
+                    logResult(`❌ WebSocket服务异常: ${response.status}`);
+                    return false;
+                }
+            } catch (error) {
+                updateStatus('websocket-status', 'error', '离线');
+                logResult(`❌ WebSocket服务离线: ${error.message}`);
+                return false;
+            }
+        }
+
+        function testFrontendWebSocket() {
+            return new Promise((resolve) => {
+                try {
+                    const socketUrl = window.location.protocol === 'https:' 
+                        ? window.location.origin 
+                        : 'http://localhost:3000';
+
+                    socket = io(socketUrl, {
+                        transports: ['websocket', 'polling'],
+                        timeout: 10000
+                    });
+
+                    socket.on('connect', () => {
+                        updateStatus('frontend-ws-status', 'success', '已连接');
+                        logResult(`✅ 前端WebSocket连接成功: ${socket.id}`);
+                        resolve(true);
+                    });
+
+                    socket.on('connect_error', (error) => {
+                        updateStatus('frontend-ws-status', 'error', '连接失败');
+                        logResult(`❌ 前端WebSocket连接失败: ${error.message}`);
+                        resolve(false);
+                    });
+
+                    setTimeout(() => {
+                        if (!socket.connected) {
+                            updateStatus('frontend-ws-status', 'error', '超时');
+                            logResult('❌ 前端WebSocket连接超时');
+                            resolve(false);
+                        }
+                    }, 5000);
+
+                } catch (error) {
+                    updateStatus('frontend-ws-status', 'error', '初始化失败');
+                    logResult(`❌ 前端WebSocket初始化失败: ${error.message}`);
+                    resolve(false);
+                }
+            });
+        }
+
+        function testEventRooms() {
+            return new Promise((resolve) => {
+                if (!socket || !socket.connected) {
+                    updateStatus('room-status', 'error', 'WebSocket未连接');
+                    logResult('❌ 事件房间测试失败: WebSocket未连接');
+                    resolve(false);
+                    return;
+                }
+
+                const testEventId = 'tc-test-' + Date.now();
+                
+                socket.on('joined-event', (data) => {
+                    if (data.eventId === testEventId) {
+                        updateStatus('room-status', 'success', '正常');
+                        logResult(`✅ 事件房间功能正常: 成功加入 ${testEventId}`);
+                        resolve(true);
+                    }
+                });
+
+                logResult(`🧪 测试加入事件房间: ${testEventId}`);
+                socket.emit('join-event', testEventId);
+
+                setTimeout(() => {
+                    updateStatus('room-status', 'error', '超时');
+                    logResult('❌ 事件房间测试超时');
+                    resolve(false);
+                }, 3000);
+            });
+        }
+
+        function testRealTimeSync() {
+            return new Promise((resolve) => {
+                if (!socket || !socket.connected) {
+                    updateStatus('sync-status', 'error', 'WebSocket未连接');
+                    logResult('❌ 实时同步测试失败: WebSocket未连接');
+                    resolve(false);
+                    return;
+                }
+
+                const testEventId = 'tc-sync-test-' + Date.now();
+                let receivedEvents = 0;
+                const expectedEvents = ['response_created', 'participants_updated'];
+
+                expectedEvents.forEach(eventName => {
+                    socket.on(eventName, (data) => {
+                        if (data.eventId === testEventId) {
+                            receivedEvents++;
+                            logResult(`✅ 收到实时事件: ${eventName}`);
+                            
+                            if (receivedEvents >= expectedEvents.length) {
+                                updateStatus('sync-status', 'success', '正常');
+                                logResult('✅ 实时同步功能完全正常');
+                                resolve(true);
+                            }
+                        }
+                    });
+                });
+
+                // 模拟创建响应来触发实时事件
+                logResult('🧪 测试实时同步...');
+                fetch('/api/responses', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        eventId: testEventId,
+                        participantName: 'TestUser',
+                        userInitials: 'TU',
+                        paintMode: 'AVAILABLE',
+                        timezone: 'UTC+8',
+                        availableSlots: ['{"dateIndex": 0, "timeIndex": 0}']
+                    })
+                }).catch(error => {
+                    logResult(`⚠️ 创建测试响应失败: ${error.message}`);
+                });
+
+                setTimeout(() => {
+                    if (receivedEvents === 0) {
+                        updateStatus('sync-status', 'error', '无响应');
+                        logResult('❌ 实时同步测试无响应');
+                        resolve(false);
+                    } else if (receivedEvents < expectedEvents.length) {
+                        updateStatus('sync-status', 'pending', '部分正常');
+                        logResult(`⚠️ 实时同步部分正常 (${receivedEvents}/${expectedEvents.length})`);
+                        resolve(false);
+                    }
+                }, 5000);
+            });
+        }
+
+        async function runFullTest() {
+            document.getElementById('test-results').innerHTML = '开始测试...<br>';
+            
+            logResult('🚀 开始完整系统测试');
+            
+            // 1. 检查后端API
+            const apiOk = await checkAPIService();
+            if (!apiOk) return;
+            
+            // 2. 检查WebSocket服务
+            const wsServiceOk = await checkWebSocketService();
+            if (!wsServiceOk) return;
+            
+            // 3. 测试前端WebSocket连接
+            const frontendWsOk = await testFrontendWebSocket();
+            if (!frontendWsOk) return;
+            
+            // 4. 测试事件房间
+            const roomOk = await testEventRooms();
+            if (!roomOk) return;
+            
+            // 5. 测试实时同步
+            await testRealTimeSync();
+            
+            logResult('🎉 所有测试完成！');
+        }
+
+        // 页面加载时自动开始测试
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(runFullTest, 1000);
+        });
+    </script>
+</body>
+</html> 

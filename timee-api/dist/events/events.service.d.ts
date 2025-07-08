@@ -2,157 +2,64 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 export declare class EventsService {
-    private prisma;
+    private readonly prisma;
+    private readonly logger;
     constructor(prisma: PrismaService);
-    private generateTCode;
-    create(createEventDto: CreateEventDto): Promise<{
-        responses: {
-            id: string;
-            timezone: string;
-            createdAt: Date;
-            updatedAt: Date;
-            eventId: string;
-            participantName: string;
-            participantEmail: string | null;
-            userInitials: string;
-            paintMode: import(".prisma/client").$Enums.PaintMode;
-            availableSlots: import("@prisma/client/runtime/library").JsonValue;
-        }[];
-    } & {
-        id: string;
-        title: string;
-        description: string | null;
-        timezone: string;
-        startDate: Date;
-        endDate: Date;
-        startTime: string;
-        endTime: string;
-        eventType: import(".prisma/client").$Enums.EventType;
-        includeTime: boolean;
-        selectedDates: string | null;
-        finalizedSlots: string[];
-        createdBy: string | null;
-        createdAt: Date;
-        updatedAt: Date;
+    createEvent(createEventDto: CreateEventDto): Promise<{
+        id: any;
+        tcCode: any;
+        title: any;
+        description: any;
+        startDate: any;
+        endDate: any;
+        timezone: any;
+        createdAt: any;
+        updatedAt: any;
     }>;
-    findAll(): Promise<({
-        responses: {
-            id: string;
-            timezone: string;
-            createdAt: Date;
-            updatedAt: Date;
-            participantName: string;
-            participantEmail: string;
-            userInitials: string;
-            paintMode: import(".prisma/client").$Enums.PaintMode;
-        }[];
-        _count: {
-            responses: number;
+    findByTcCode(tcCode: string): Promise<{
+        id: any;
+        tcCode: any;
+        title: any;
+        description: any;
+        startDate: any;
+        endDate: any;
+        timezone: any;
+        createdAt: any;
+        updatedAt: any;
+        participants: any;
+        stats: {
+            participantCount: any;
+            responseCount: any;
         };
-    } & {
-        id: string;
-        title: string;
-        description: string | null;
-        timezone: string;
-        startDate: Date;
-        endDate: Date;
-        startTime: string;
-        endTime: string;
-        eventType: import(".prisma/client").$Enums.EventType;
-        includeTime: boolean;
-        selectedDates: string | null;
-        finalizedSlots: string[];
-        createdBy: string | null;
-        createdAt: Date;
-        updatedAt: Date;
-    })[]>;
-    findOne(id: string): Promise<{
-        responses: {
-            id: string;
-            timezone: string;
-            createdAt: Date;
-            updatedAt: Date;
-            eventId: string;
-            participantName: string;
-            participantEmail: string | null;
-            userInitials: string;
-            paintMode: import(".prisma/client").$Enums.PaintMode;
-            availableSlots: import("@prisma/client/runtime/library").JsonValue;
-        }[];
-    } & {
-        id: string;
-        title: string;
-        description: string | null;
-        timezone: string;
-        startDate: Date;
-        endDate: Date;
-        startTime: string;
-        endTime: string;
-        eventType: import(".prisma/client").$Enums.EventType;
-        includeTime: boolean;
-        selectedDates: string | null;
-        finalizedSlots: string[];
-        createdBy: string | null;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
-    update(id: string, updateEventDto: UpdateEventDto): Promise<{
-        responses: {
-            id: string;
-            timezone: string;
-            createdAt: Date;
-            updatedAt: Date;
-            eventId: string;
-            participantName: string;
-            participantEmail: string | null;
-            userInitials: string;
-            paintMode: import(".prisma/client").$Enums.PaintMode;
-            availableSlots: import("@prisma/client/runtime/library").JsonValue;
-        }[];
-    } & {
-        id: string;
-        title: string;
-        description: string | null;
-        timezone: string;
-        startDate: Date;
-        endDate: Date;
-        startTime: string;
-        endTime: string;
-        eventType: import(".prisma/client").$Enums.EventType;
-        includeTime: boolean;
-        selectedDates: string | null;
-        finalizedSlots: string[];
-        createdBy: string | null;
-        createdAt: Date;
-        updatedAt: Date;
+    findById(id: string): Promise<{
+        id: any;
+        tcCode: any;
+        title: any;
+        description: any;
+        startDate: any;
+        endDate: any;
+        timezone: any;
+        createdAt: any;
+        updatedAt: any;
+        participants: any;
+        stats: {
+            participantCount: any;
+            responseCount: any;
+        };
     }>;
-    remove(id: string): Promise<{
-        id: string;
-        title: string;
-        description: string | null;
-        timezone: string;
-        startDate: Date;
-        endDate: Date;
-        startTime: string;
-        endTime: string;
-        eventType: import(".prisma/client").$Enums.EventType;
-        includeTime: boolean;
-        selectedDates: string | null;
-        finalizedSlots: string[];
-        createdBy: string | null;
-        createdAt: Date;
-        updatedAt: Date;
+    updateEvent(id: string, updateEventDto: UpdateEventDto): Promise<any>;
+    deleteEvent(id: string): Promise<any>;
+    findAll(page?: number, limit?: number): Promise<{
+        events: any;
+        pagination: {
+            page: number;
+            limit: number;
+            total: any;
+            hasNext: boolean;
+            hasPrev: boolean;
+        };
     }>;
-    getEventResponses(eventId: string): Promise<{
-        id: string;
-        timezone: string;
-        createdAt: Date;
-        updatedAt: Date;
-        eventId: string;
-        participantName: string;
-        participantEmail: string | null;
-        userInitials: string;
-        paintMode: import(".prisma/client").$Enums.PaintMode;
-        availableSlots: import("@prisma/client/runtime/library").JsonValue;
-    }[]>;
+    generateTcCode(): string;
+    isTcCodeAvailable(tcCode: string): Promise<boolean>;
 }

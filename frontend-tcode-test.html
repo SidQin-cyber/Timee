@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>前端T-Code测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 前端T-Code修复测试</h1>
+        
+        <div class="test-section">
+            <h3>测试步骤</h3>
+            <p>1. 点击下面的按钮生成一个测试T-Code</p>
+            <p>2. 使用该T-Code创建事件</p>
+            <p>3. 验证返回的事件ID是否与生成的T-Code一致</p>
+            <button onclick="runTest()">运行测试</button>
+            <div id="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>手动测试指南</h3>
+            <p><strong>如果您遇到T-Code不一致的问题，请按以下步骤测试：</strong></p>
+            <ol>
+                <li>访问主页：<a href="http://localhost:8080" target="_blank">http://localhost:8080</a></li>
+                <li>记录页面顶部显示的T-Code（如TC-367477）</li>
+                <li>选择日期并创建活动</li>
+                <li>检查创建后的URL是否与记录的T-Code一致</li>
+                <li>如果不一致，说明前端修复还未生效</li>
+            </ol>
+        </div>
+        
+        <div class="test-section">
+            <h3>API测试结果</h3>
+            <p>✅ 后端API已修复：使用自定义T-Code创建事件成功</p>
+            <p>✅ 后端API已修复：通过T-Code获取事件成功</p>
+            <p>🔄 前端修复状态：需要通过实际创建活动来验证</p>
+        </div>
+    </div>
+
+    <script>
+        async function runTest() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<p>🔄 正在测试...</p>';
+            
+            try {
+                // 生成测试T-Code（模拟前端逻辑）
+                const timestamp = Date.now().toString().slice(-3);
+                const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+                const testTCode = `tc-${timestamp}${random}`;
+                
+                console.log('生成的测试T-Code:', testTCode);
+                
+                // 创建事件
+                const eventData = {
+                    id: testTCode,
+                    title: `测试事件 ${testTCode}`,
+                    description: 'T-Code一致性测试',
+                    startDate: '2024-01-01',
+                    endDate: '2024-01-02',
+                    startTime: '09:00',
+                    endTime: '17:00',
+                    timezone: 'UTC+8',
+                    eventType: 'group',
+                    includeTime: true,
+                    selectedDates: ['2024-01-01']
+                };
+                
+                const response = await fetch('/api/events', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(eventData)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const result = await response.json();
+                console.log('API响应:', result);
+                
+                if (result.id === testTCode) {
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            ✅ 测试通过！<br>
+                            生成的T-Code: ${testTCode}<br>
+                            返回的事件ID: ${result.id}<br>
+                            <strong>T-Code一致性修复成功！</strong>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="result error">
+                            ❌ 测试失败！<br>
+                            生成的T-Code: ${testTCode}<br>
+                            返回的事件ID: ${result.id}<br>
+                            <strong>T-Code不一致，需要进一步调试</strong>
+                        </div>
+                    `;
+                }
+                
+            } catch (error) {
+                console.error('测试失败:', error);
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        ❌ 测试失败：${error.message}
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html> 

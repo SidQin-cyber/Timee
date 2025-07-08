@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户身份识别和数据持久化测试</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+        }
+        .test-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .test-step {
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: white;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        .step-number {
+            display: inline-block;
+            width: 25px;
+            height: 25px;
+            background-color: #007bff;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 25px;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        .expected {
+            background-color: #e7f3ff;
+            border-left: 4px solid #007bff;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 0 5px 5px 0;
+        }
+        .link-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            margin: 10px 10px 10px 0;
+        }
+        .link-button:hover {
+            background-color: #0056b3;
+        }
+        .api-test {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+            border: 1px solid #dee2e6;
+        }
+        .api-result {
+            background-color: #e9ecef;
+            padding: 10px;
+            border-radius: 3px;
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .warning { color: #ffc107; }
+        .info { color: #17a2b8; }
+        .fix-highlight {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        .problem-highlight {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        .user-scenario {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>👤 用户身份识别和数据持久化测试</h1>
+            <p>验证用户重新进入房间后能正确恢复之前的选择</p>
+            <div id="timestamp">测试时间: <span id="current-time"></span></div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">📋 问题分析</div>
+            <div class="problem-highlight">
+                <strong>原问题：</strong>
+                <ul>
+                    <li>用户退出房间后，再次进入无法看到自己之前的选择</li>
+                    <li>用户选择后不能立即在团队热力图中显示</li>
+                    <li>多用户同时在线时，无法看到彼此的实时选择</li>
+                    <li>数据持久化不一致，导致用户体验混乱</li>
+                </ul>
+            </div>
+            
+            <div class="fix-highlight">
+                <strong>修复内容：</strong>
+                <ul>
+                    <li>改进用户身份识别：重新进入时自动加载已保存的选择</li>
+                    <li>实时热力图同步：用户选择立即显示在团队热力图中</li>
+                    <li>数据持久化：确保用户数据在多次进入后保持一致</li>
+                    <li>异步用户初始化：正确处理用户数据加载的异步操作</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">🎯 测试事件</div>
+            <p><strong>测试事件：</strong>tc-365667 (Timee Area-228317)</p>
+            <p><strong>当前参与者：</strong>Sid, qinguodongdong (2人)</p>
+            <div class="api-test">
+                <button onclick="checkEventData()">🔍 检查事件数据</button>
+                <div id="event-data-result" class="api-result"></div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">🧪 测试场景</div>
+            
+            <div class="user-scenario">
+                <strong>🎭 测试场景A：用户重新进入房间</strong>
+                <p>模拟用户退出房间后重新进入，验证数据恢复</p>
+            </div>
+            
+            <div class="test-step">
+                <span class="step-number">1</span>
+                <strong>首次进入并选择时间</strong>
+                <p>以"测试用户A"身份进入房间，选择一些时间段</p>
+                <a href="http://localhost:5173/event/tc-365667" class="link-button" target="_blank">🔗 打开事件页面</a>
+                <div class="expected">
+                    <strong>预期结果：</strong>
+                    <ul>
+                        <li>能够正常输入用户名"测试用户A"并进入</li>
+                        <li>选择时间段后，左侧显示绿色选择</li>
+                        <li>右侧团队热力图立即显示选择（实时同步）</li>
+                        <li>数据自动保存到服务器</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="test-step">
+                <span class="step-number">2</span>
+                <strong>关闭页面模拟退出</strong>
+                <p>关闭浏览器标签页，模拟用户退出房间</p>
+                <div class="expected">
+                    <strong>预期结果：</strong>
+                    <ul>
+                        <li>页面关闭前触发紧急保存</li>
+                        <li>用户数据保存到服务器</li>
+                        <li>localStorage保存用户名信息</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="test-step">
+                <span class="step-number">3</span>
+                <strong>重新进入房间</strong>
+                <p>重新打开事件页面，验证数据恢复</p>
+                <a href="http://localhost:5173/event/tc-365667" class="link-button" target="_blank">🔗 重新打开事件页面</a>
+                <div class="expected">
+                    <strong>预期结果：</strong>
+                    <ul>
+                        <li>自动识别为"测试用户A"，无需重新输入用户名</li>
+                        <li>左侧自动显示之前选择的时间段</li>
+                        <li>右侧团队热力图显示所有用户的选择</li>
+                        <li>可以继续修改时间选择</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="user-scenario">
+                <strong>🎭 测试场景B：多用户实时同步</strong>
+                <p>模拟多个用户同时在线，验证实时同步</p>
+            </div>
+
+            <div class="test-step">
+                <span class="step-number">4</span>
+                <strong>开启第二个用户窗口</strong>
+                <p>在新的无痕窗口中以"测试用户B"身份进入</p>
+                <a href="http://localhost:5173/event/tc-365667" class="link-button" target="_blank">🔗 新窗口打开（请用无痕模式）</a>
+                <div class="expected">
+                    <strong>预期结果：</strong>
+                    <ul>
+                        <li>能够以不同用户名进入房间</li>
+                        <li>右侧热力图显示"测试用户A"的选择</li>
+                        <li>参与者计数正确显示</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="test-step">
+                <span class="step-number">5</span>
+                <strong>测试实时同步</strong>
+                <p>在两个窗口中分别进行时间选择，观察实时同步效果</p>
+                <div class="expected">
+                    <strong>预期结果：</strong>
+                    <ul>
+                        <li>用户A选择时间后，立即在右侧热力图显示</li>
+                        <li>用户B选择时间后，两个窗口的热力图都更新</li>
+                        <li>重合时间显示正确的参与人数</li>
+                        <li>实时数据同步无延迟</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="test-step">
+                <span class="step-number">6</span>
+                <strong>验证数据持久化</strong>
+                <p>关闭并重新打开任一窗口，验证数据持久化</p>
+                <div class="expected">
+                    <strong>预期结果：</strong>
+                    <ul>
+                        <li>重新进入后，用户身份正确识别</li>
+                        <li>之前的选择完整恢复</li>
+                        <li>团队热力图显示所有用户的最新选择</li>
+                        <li>可以继续进行时间选择和修改</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">🔄 实时监控</div>
+            <div class="api-test">
+                <button onclick="startMonitoring()">▶️ 开始监控</button>
+                <button onclick="stopMonitoring()">⏹️ 停止监控</button>
+                <div id="monitoring-result" class="api-result"></div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">✅ 修复验证要点</div>
+            <div class="fix-highlight">
+                <strong>关键验证点：</strong>
+                <ul>
+                    <li><strong>用户身份持久化：</strong>重新进入时能自动识别用户身份</li>
+                    <li><strong>数据完整恢复：</strong>用户之前的选择能完整恢复</li>
+                    <li><strong>实时热力图同步：</strong>用户选择立即显示在团队区域</li>
+                    <li><strong>多用户并发：</strong>多个用户同时在线时数据同步正确</li>
+                    <li><strong>数据一致性：</strong>无论进入多少次，数据都保持一致</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">📊 测试结果</div>
+            <div id="test-results">
+                <p>请按照上述步骤进行测试，并记录实际结果。</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 更新时间戳
+        function updateTimestamp() {
+            document.getElementById('current-time').textContent = new Date().toLocaleString('zh-CN');
+        }
+        updateTimestamp();
+        setInterval(updateTimestamp, 1000);
+
+        // 检查事件数据
+        async function checkEventData() {
+            const resultDiv = document.getElementById('event-data-result');
+            resultDiv.textContent = '正在检查事件数据...';
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/responses/event/tc-365667');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const result = {
+                        success: true,
+                        participantCount: data.length,
+                        participants: data.map(p => ({
+                            name: p.participantName,
+                            slotsCount: p.availableSlots.length,
+                            paintMode: p.paintMode,
+                            updatedAt: p.updatedAt
+                        }))
+                    };
+                    resultDiv.innerHTML = `<span class="success">✅ 事件数据检查成功</span>\n${JSON.stringify(result, null, 2)}`;
+                } else {
+                    resultDiv.innerHTML = `<span class="error">❌ 事件数据检查失败</span>\n${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ 网络错误</span>\n${error.message}`;
+            }
+        }
+
+        // 实时监控
+        let monitoringInterval;
+        
+        function startMonitoring() {
+            if (monitoringInterval) return;
+            
+            const resultDiv = document.getElementById('monitoring-result');
+            resultDiv.textContent = '开始监控事件数据变化...\n';
+            
+            monitoringInterval = setInterval(async () => {
+                try {
+                    const response = await fetch('http://localhost:3000/api/responses/event/tc-365667');
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        const timestamp = new Date().toLocaleTimeString();
+                        const summary = `[${timestamp}] 参与者: ${data.length}人`;
+                        const details = data.map(p => `  ${p.participantName}: ${p.availableSlots.length}个时间段`).join('\n');
+                        resultDiv.textContent += `${summary}\n${details}\n\n`;
+                        resultDiv.scrollTop = resultDiv.scrollHeight;
+                    }
+                } catch (error) {
+                    console.error('监控错误:', error);
+                }
+            }, 3000);
+        }
+        
+        function stopMonitoring() {
+            if (monitoringInterval) {
+                clearInterval(monitoringInterval);
+                monitoringInterval = null;
+                document.getElementById('monitoring-result').textContent += '\n监控已停止。';
+            }
+        }
+
+        // 页面卸载时停止监控
+        window.addEventListener('beforeunload', stopMonitoring);
+    </script>
+</body>
+</html> 

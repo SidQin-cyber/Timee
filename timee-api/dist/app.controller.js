@@ -29,9 +29,6 @@ let AppController = class AppController {
             external_url: 'http://wmxkwzbmhlj.sealoshzh.site/api'
         };
     }
-    getRootEvents() {
-        return 'API endpoints are available at /api/events - please use the /api prefix';
-    }
     getStatus() {
         return {
             message: 'Timee API is running',
@@ -57,12 +54,6 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Object)
 ], AppController.prototype, "getHealth", null);
-__decorate([
-    (0, common_1.Get)('events'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", String)
-], AppController.prototype, "getRootEvents", null);
 __decorate([
     (0, common_1.Get)('status'),
     __metadata("design:type", Function),

@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timee tc-538518 综合诊断</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        
+        .diagnosis-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            border-left: 4px solid #6c757d;
+            transition: all 0.3s ease;
+        }
+        
+        .card.success {
+            border-left-color: #28a745;
+            background: #d4edda;
+        }
+        
+        .card.error {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+        
+        .card.warning {
+            border-left-color: #ffc107;
+            background: #fff3cd;
+        }
+        
+        .card.info {
+            border-left-color: #17a2b8;
+            background: #d1ecf1;
+        }
+        
+        .card h3 {
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 1.2em;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-online {
+            background: #28a745;
+        }
+        
+        .status-offline {
+            background: #dc3545;
+        }
+        
+        .status-unknown {
+            background: #ffc107;
+        }
+        
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+            transition: background 0.3s ease;
+        }
+        
+        .btn:hover {
+            background: #0056b3;
+        }
+        
+        .btn.success {
+            background: #28a745;
+        }
+        
+        .btn.success:hover {
+            background: #218838;
+        }
+        
+        .btn.danger {
+            background: #dc3545;
+        }
+        
+        .btn.danger:hover {
+            background: #c82333;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        .data-table th,
+        .data-table td {
+            padding: 8px 12px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .data-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+        
+        .log-section {
+            margin-top: 30px;
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .log-entry {
+            margin: 2px 0;
+            padding: 2px 0;
+        }
+        
+        .log-entry.success {
+            color: #68d391;
+        }
+        
+        .log-entry.error {
+            color: #fc8181;
+        }
+        
+        .log-entry.warning {
+            color: #f6e05e;
+        }
+        
+        .log-entry.info {
+            color: #4fd1c7;
+        }
+        
+        .issue-summary {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .issue-summary h3 {
+            color: #856404;
+            margin-bottom: 15px;
+        }
+        
+        .issue-item {
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 6px;
+            border-left: 4px solid #ffc107;
+        }
+        
+        .solutions {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .solutions h3 {
+            color: #155724;
+            margin-bottom: 15px;
+        }
+        
+        .solution-item {
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 6px;
+            border-left: 4px solid #28a745;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Timee tc-538518 综合诊断</h1>
+        
+        <div class="diagnosis-grid">
+            <!-- 事件基础信息 -->
+            <div class="card" id="event-info-card">
+                <h3>📅 事件基础信息</h3>
+                <div id="event-info-content">检查中...</div>
+                <button class="btn" onclick="checkEventInfo()">🔄 重新检查</button>
+            </div>
+            
+            <!-- 数据库响应数据 -->
+            <div class="card" id="database-card">
+                <h3>💾 数据库响应数据</h3>
+                <div id="database-content">检查中...</div>
+                <button class="btn" onclick="checkDatabaseResponses()">🔄 重新检查</button>
+            </div>
+            
+            <!-- WebSocket 连接状态 -->
+            <div class="card" id="websocket-card">
+                <h3>🔌 WebSocket 连接</h3>
+                <div id="websocket-content">
+                    <div>状态: <span class="status-indicator status-unknown"></span>未连接</div>
+                </div>
+                <button class="btn" onclick="testWebSocket()">🔗 测试连接</button>
+            </div>
+            
+            <!-- 前端API访问 -->
+            <div class="card" id="frontend-api-card">
+                <h3>🌐 前端API访问</h3>
+                <div id="frontend-api-content">检查中...</div>
+                <button class="btn" onclick="testFrontendAPI()">🔄 重新检查</button>
+            </div>
+            
+            <!-- 实时同步测试 -->
+            <div class="card" id="realtime-card">
+                <h3>⚡ 实时同步测试</h3>
+                <div id="realtime-content">未开始</div>
+                <button class="btn" onclick="startRealtimeTest()">🚀 开始测试</button>
+            </div>
+            
+            <!-- 服务状态 -->
+            <div class="card" id="services-card">
+                <h3>🛠️ 服务状态</h3>
+                <div id="services-content">检查中...</div>
+                <button class="btn" onclick="checkServices()">🔄 重新检查</button>
+            </div>
+        </div>
+        
+        <!-- 参与者数据详情 -->
+        <div class="card">
+            <h3>👥 参与者数据详情</h3>
+            <div id="participants-details">
+                <p>正在加载参与者数据...</p>
+            </div>
+        </div>
+        
+        <!-- 问题汇总 -->
+        <div class="issue-summary" id="issue-summary" style="display: none;">
+            <h3>⚠️ 发现的问题</h3>
+            <div id="issue-list"></div>
+        </div>
+        
+        <!-- 解决方案 -->
+        <div class="solutions" id="solutions" style="display: none;">
+            <h3>💡 建议解决方案</h3>
+            <div id="solution-list"></div>
+        </div>
+        
+        <!-- 实时日志 -->
+        <div class="log-section">
+            <h3>📝 诊断日志</h3>
+            <div id="log-content"></div>
+        </div>
+    </div>
+
+    <script>
+        const eventId = 'tc-538518';
+        const baseUrl = 'http://localhost:3000';
+        const wsUrl = 'ws://localhost:3000';
+        
+        let socket = null;
+        let issues = [];
+        let solutions = [];
+        let eventData = null;
+        let responseData = [];
+        
+        function log(message, type = 'info') {
+            const logContent = document.getElementById('log-content');
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${timestamp}] ${message}`;
+            logContent.appendChild(entry);
+            logContent.scrollTop = logContent.scrollHeight;
+        }
+        
+        function updateCard(cardId, status, content) {
+            const card = document.getElementById(cardId);
+            card.className = `card ${status}`;
+            const contentDiv = card.querySelector('div');
+            contentDiv.innerHTML = content;
+        }
+        
+        function addIssue(issue) {
+            if (!issues.includes(issue)) {
+                issues.push(issue);
+                updateIssueSummary();
+            }
+        }
+        
+        function addSolution(solution) {
+            if (!solutions.includes(solution)) {
+                solutions.push(solution);
+                updateSolutions();
+            }
+        }
+        
+        function updateIssueSummary() {
+            const issueSection = document.getElementById('issue-summary');
+            const issueList = document.getElementById('issue-list');
+            
+            if (issues.length === 0) {
+                issueSection.style.display = 'none';
+                return;
+            }
+            
+            issueSection.style.display = 'block';
+            issueList.innerHTML = issues.map(issue => `
+                <div class="issue-item">${issue}</div>
+            `).join('');
+        }
+        
+        function updateSolutions() {
+            const solutionSection = document.getElementById('solutions');
+            const solutionList = document.getElementById('solution-list');
+            
+            if (solutions.length === 0) {
+                solutionSection.style.display = 'none';
+                return;
+            }
+            
+            solutionSection.style.display = 'block';
+            solutionList.innerHTML = solutions.map(solution => `
+                <div class="solution-item">${solution}</div>
+            `).join('');
+        }
+        
+        async function checkEventInfo() {
+            try {
+                log('检查事件基础信息...', 'info');
+                const response = await fetch(`${baseUrl}/api/events/${eventId}`);
+                
+                if (response.ok) {
+                    eventData = await response.json();
+                    log('✅ 事件数据加载成功', 'success');
+                    
+                    updateCard('event-info-card', 'success', `
+                        <div>✅ 事件存在</div>
+                        <div><strong>标题:</strong> ${eventData.title}</div>
+                        <div><strong>时间范围:</strong> ${eventData.startTime} - ${eventData.endTime}</div>
+                        <div><strong>包含时间:</strong> ${eventData.includeTime ? '是' : '否'}</div>
+                        <div><strong>开始日期:</strong> ${new Date(eventData.startDate).toLocaleDateString()}</div>
+                        <div><strong>结束日期:</strong> ${new Date(eventData.endDate).toLocaleDateString()}</div>
+                    `);
+                } else {
+                    log(`❌ 事件加载失败: ${response.status}`, 'error');
+                    updateCard('event-info-card', 'error', `❌ 事件不存在或无法访问 (${response.status})`);
+                    addIssue('事件数据无法加载，可能事件ID不正确');
+                    addSolution('检查事件ID是否正确，或联系管理员');
+                }
+            } catch (error) {
+                log(`❌ 事件检查异常: ${error.message}`, 'error');
+                updateCard('event-info-card', 'error', `❌ 网络错误: ${error.message}`);
+                addIssue('网络连接问题，无法访问后端API');
+                addSolution('检查网络连接和后端服务状态');
+            }
+        }
+        
+        async function checkDatabaseResponses() {
+            try {
+                log('检查数据库响应数据...', 'info');
+                const response = await fetch(`${baseUrl}/api/responses/event/${eventId}`);
+                
+                if (response.ok) {
+                    responseData = await response.json();
+                    log(`✅ 加载到 ${responseData.length} 条响应数据`, 'success');
+                    
+                    if (responseData.length === 0) {
+                        updateCard('database-card', 'warning', `
+                            <div>⚠️ 没有响应数据</div>
+                            <div>数据库中没有找到该事件的用户响应</div>
+                        `);
+                        addIssue('数据库中没有用户响应数据');
+                        addSolution('用户需要先在前端选择时间并提交');
+                    } else {
+                        updateCard('database-card', 'success', `
+                            <div>✅ 找到 ${responseData.length} 条响应</div>
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>用户</th>
+                                        <th>时间段数</th>
+                                        <th>创建时间</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${responseData.map(r => `
+                                        <tr>
+                                            <td>${r.participantName}</td>
+                                            <td>${r.availableSlots ? r.availableSlots.length : 0}</td>
+                                            <td>${new Date(r.createdAt).toLocaleString()}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        `);
+                    }
+                    
+                    updateParticipantsDetails();
+                } else {
+                    log(`❌ 响应数据加载失败: ${response.status}`, 'error');
+                    updateCard('database-card', 'error', `❌ 无法加载响应数据 (${response.status})`);
+                    addIssue('无法从数据库加载响应数据');
+                    addSolution('检查后端API和数据库连接');
+                }
+            } catch (error) {
+                log(`❌ 数据库检查异常: ${error.message}`, 'error');
+                updateCard('database-card', 'error', `❌ 网络错误: ${error.message}`);
+                addIssue('网络连接问题，无法访问响应数据API');
+                addSolution('检查网络连接和后端服务状态');
+            }
+        }
+        
+        function updateParticipantsDetails() {
+            const detailsDiv = document.getElementById('participants-details');
+            
+            if (responseData.length === 0) {
+                detailsDiv.innerHTML = '<p>❌ 没有参与者数据</p>';
+                return;
+            }
+            
+            detailsDiv.innerHTML = `
+                <p><strong>总参与者数:</strong> ${responseData.length}</p>
+                <div style="margin-top: 15px;">
+                    ${responseData.map(participant => `
+                        <div style="margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 6px;">
+                            <strong>${participant.participantName} (${participant.userInitials})</strong>
+                            <br>
+                            <small>时区: ${participant.timezone} | 选择模式: ${participant.paintMode}</small>
+                            <br>
+                            <small>选择的时间段: ${participant.availableSlots ? participant.availableSlots.length : 0} 个</small>
+                            <br>
+                            <small>创建时间: ${new Date(participant.createdAt).toLocaleString()}</small>
+                            ${participant.availableSlots && participant.availableSlots.length > 0 ? `
+                                <details style="margin-top: 10px;">
+                                    <summary>查看详细时间段</summary>
+                                    <pre style="background: #e9ecef; padding: 10px; border-radius: 4px; margin-top: 5px; font-size: 12px; overflow-x: auto;">
+${JSON.stringify(participant.availableSlots, null, 2)}
+                                    </pre>
+                                </details>
+                            ` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        function testWebSocket() {
+            if (socket) {
+                log('关闭现有WebSocket连接', 'info');
+                socket.close();
+            }
+            
+            try {
+                log('尝试连接WebSocket...', 'info');
+                socket = new WebSocket(wsUrl);
+                
+                socket.onopen = function() {
+                    log('✅ WebSocket连接成功', 'success');
+                    updateCard('websocket-card', 'success', `
+                        <div>✅ 连接状态: 已连接</div>
+                        <div>服务器: ${wsUrl}</div>
+                        <div>连接时间: ${new Date().toLocaleTimeString()}</div>
+                    `);
+                    
+                    // 自动加入事件房间
+                    socket.send(JSON.stringify({
+                        type: 'join-event',
+                        eventId: eventId
+                    }));
+                    log(`发送加入房间消息: ${eventId}`, 'info');
+                };
+                
+                socket.onmessage = function(event) {
+                    try {
+                        const data = JSON.parse(event.data);
+                        log(`收到WebSocket消息: ${data.type || 'unknown'}`, 'info');
+                        
+                        // 更新WebSocket卡片状态
+                        updateCard('websocket-card', 'success', `
+                            <div>✅ 连接状态: 已连接</div>
+                            <div>最后消息: ${data.type || 'unknown'}</div>
+                            <div>消息时间: ${new Date().toLocaleTimeString()}</div>
+                        `);
+                        
+                    } catch (error) {
+                        log(`解析WebSocket消息失败: ${error.message}`, 'error');
+                    }
+                };
+                
+                socket.onerror = function(error) {
+                    log('❌ WebSocket连接错误', 'error');
+                    updateCard('websocket-card', 'error', `
+                        <div>❌ 连接状态: 连接错误</div>
+                        <div>错误时间: ${new Date().toLocaleTimeString()}</div>
+                    `);
+                    addIssue('WebSocket连接失败，实时同步不可用');
+                    addSolution('检查WebSocket服务是否正常运行');
+                };
+                
+                socket.onclose = function() {
+                    log('⚠️ WebSocket连接关闭', 'warning');
+                    updateCard('websocket-card', 'warning', `
+                        <div>⚠️ 连接状态: 已断开</div>
+                        <div>断开时间: ${new Date().toLocaleTimeString()}</div>
+                    `);
+                };
+                
+            } catch (error) {
+                log(`❌ WebSocket连接异常: ${error.message}`, 'error');
+                updateCard('websocket-card', 'error', `❌ 连接异常: ${error.message}`);
+                addIssue('WebSocket连接异常');
+                addSolution('检查WebSocket服务配置');
+            }
+        }
+        
+        async function testFrontendAPI() {
+            try {
+                log('测试前端API访问...', 'info');
+                
+                // 测试外部URL
+                const externalUrl = 'https://wmxkwzbmhflj.sealoshzh.site';
+                const response = await fetch(`${externalUrl}/api/events/${eventId}`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    log('✅ 外部API访问成功', 'success');
+                    updateCard('frontend-api-card', 'success', `
+                        <div>✅ 外部URL访问正常</div>
+                        <div>URL: ${externalUrl}</div>
+                        <div>事件数据: 可正常获取</div>
+                        <div>响应时间: ${new Date().toLocaleTimeString()}</div>
+                    `);
+                } else {
+                    log(`❌ 外部API访问失败: ${response.status}`, 'error');
+                    updateCard('frontend-api-card', 'error', `❌ 外部URL访问失败 (${response.status})`);
+                    addIssue('外部URL无法正常访问API');
+                    addSolution('检查代理服务器和外部域名配置');
+                }
+            } catch (error) {
+                log(`❌ 前端API测试异常: ${error.message}`, 'error');
+                updateCard('frontend-api-card', 'error', `❌ 网络错误: ${error.message}`);
+                addIssue('前端API访问异常');
+                addSolution('检查网络连接和服务状态');
+            }
+        }
+        
+        async function startRealtimeTest() {
+            try {
+                log('开始实时同步测试...', 'info');
+                updateCard('realtime-card', 'info', '🔄 正在测试实时同步...');
+                
+                // 创建一个测试响应
+                const testUser = `实时测试${Math.floor(Math.random() * 1000)}`;
+                const responseData = {
+                    eventId: eventId,
+                    participantName: testUser,
+                    userInitials: testUser.substring(0, 2),
+                    paintMode: 'available',
+                    timezone: 'UTC+8',
+                    availableSlots: [
+                        { date: "7/7", time: "12:00", type: "available", dateIndex: 0, timeIndex: 12 }
+                    ]
+                };
+                
+                const response = await fetch(`${baseUrl}/api/responses`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(responseData)
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    log(`✅ 实时测试响应创建成功: ${result.id}`, 'success');
+                    
+                    // 等待WebSocket消息
+                    setTimeout(async () => {
+                        await checkDatabaseResponses();
+                        updateCard('realtime-card', 'success', `
+                            <div>✅ 实时同步测试完成</div>
+                            <div>测试用户: ${testUser}</div>
+                            <div>响应ID: ${result.id}</div>
+                            <div>测试时间: ${new Date().toLocaleTimeString()}</div>
+                        `);
+                    }, 2000);
+                } else {
+                    log(`❌ 实时测试失败: ${response.status}`, 'error');
+                    updateCard('realtime-card', 'error', `❌ 实时测试失败 (${response.status})`);
+                    addIssue('实时同步测试失败');
+                    addSolution('检查API端点和数据格式');
+                }
+            } catch (error) {
+                log(`❌ 实时测试异常: ${error.message}`, 'error');
+                updateCard('realtime-card', 'error', `❌ 测试异常: ${error.message}`);
+                addIssue('实时同步测试异常');
+                addSolution('检查网络连接和服务状态');
+            }
+        }
+        
+        async function checkServices() {
+            try {
+                log('检查服务状态...', 'info');
+                
+                const services = [
+                    { name: '后端API', url: 'http://localhost:3000/api' },
+                    { name: '前端应用', url: 'http://localhost:5173' },
+                    { name: '代理服务器', url: 'http://localhost:8080' },
+                    { name: '外部访问', url: 'https://wmxkwzbmhflj.sealoshzh.site' }
+                ];
+                
+                const results = await Promise.all(services.map(async (service) => {
+                    try {
+                        const response = await fetch(service.url);
+                        return {
+                            name: service.name,
+                            status: response.ok ? 'online' : 'error',
+                            code: response.status
+                        };
+                    } catch (error) {
+                        return {
+                            name: service.name,
+                            status: 'offline',
+                            error: error.message
+                        };
+                    }
+                }));
+                
+                const onlineCount = results.filter(r => r.status === 'online').length;
+                const status = onlineCount === results.length ? 'success' : 
+                             onlineCount > 0 ? 'warning' : 'error';
+                
+                updateCard('services-card', status, `
+                    <div>${onlineCount}/${results.length} 服务在线</div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>服务</th>
+                                <th>状态</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${results.map(r => `
+                                <tr>
+                                    <td>${r.name}</td>
+                                    <td>
+                                        <span class="status-indicator status-${r.status === 'online' ? 'online' : 'offline'}"></span>
+                                        ${r.status === 'online' ? '在线' : '离线'}
+                                        ${r.code ? ` (${r.code})` : ''}
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `);
+                
+                log(`✅ 服务检查完成: ${onlineCount}/${results.length} 在线`, 'success');
+                
+                if (onlineCount < results.length) {
+                    addIssue(`有 ${results.length - onlineCount} 个服务离线`);
+                    addSolution('检查离线服务并重新启动');
+                }
+            } catch (error) {
+                log(`❌ 服务检查异常: ${error.message}`, 'error');
+                updateCard('services-card', 'error', `❌ 检查异常: ${error.message}`);
+                addIssue('服务状态检查失败');
+                addSolution('检查网络连接');
+            }
+        }
+        
+        // 页面加载时自动运行所有检查
+        window.onload = async function() {
+            log('🚀 开始综合诊断...', 'info');
+            
+            await checkEventInfo();
+            await checkDatabaseResponses();
+            await checkServices();
+            await testFrontendAPI();
+            testWebSocket();
+            
+            log('📊 初始诊断完成', 'success');
+        };
+        
+        // 页面关闭时清理
+        window.onbeforeunload = function() {
+            if (socket) {
+                socket.close();
+            }
+        };
+    </script>
+</body>
+</html> 

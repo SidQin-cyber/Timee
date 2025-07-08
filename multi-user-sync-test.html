@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多用户同步测试 - 约时间</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin-bottom: 40px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+        }
+        .test-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .log-container {
+            max-height: 300px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 2px 0;
+        }
+        .log-entry.websocket {
+            color: #007bff;
+        }
+        .log-entry.api {
+            color: #28a745;
+        }
+        .log-entry.error {
+            color: #dc3545;
+        }
+        .log-entry.warning {
+            color: #ffc107;
+        }
+        .user-simulation {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .user-card {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            background: #f8f9fa;
+        }
+        .user-card.active {
+            border-color: #007bff;
+            background: #e7f3ff;
+        }
+        .time-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 5px;
+            margin-top: 15px;
+        }
+        .time-slot {
+            padding: 8px 4px;
+            text-align: center;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        .time-slot:hover {
+            background: #e9ecef;
+        }
+        .time-slot.selected {
+            background: #007bff;
+            color: white;
+            border-color: #0056b3;
+        }
+        .time-slot.other-user {
+            background: #28a745;
+            color: white;
+            border-color: #1e7e34;
+        }
+        .time-slot.overlap {
+            background: #ffc107;
+            color: #212529;
+            border-color: #e0a800;
+        }
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #dc3545;
+        }
+        .status-indicator.connected {
+            background: #28a745;
+        }
+        .status-indicator.connecting {
+            background: #ffc107;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        .input-group input,
+        .input-group select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 多用户同步测试</h1>
+            <p>测试不同用户选择时间时的实时显示同步</p>
+        </div>
+
+        <!-- 测试配置 -->
+        <div class="test-section">
+            <h3>📋 测试配置</h3>
+            <div class="test-controls">
+                <div class="input-group" style="width: 200px;">
+                    <label>测试事件ID:</label>
+                    <input type="text" id="eventId" placeholder="tc-123456" value="tc-538518">
+                </div>
+                <div class="input-group" style="width: 150px;">
+                    <label>API地址:</label>
+                    <input type="text" id="apiUrl" value="https://timee-api.sealoshzh.site">
+                </div>
+                <div class="input-group" style="width: 150px;">
+                    <label>用户数量:</label>
+                    <select id="userCount">
+                        <option value="2">2个用户</option>
+                        <option value="3">3个用户</option>
+                        <option value="4">4个用户</option>
+                    </select>
+                </div>
+            </div>
+            <div class="test-controls">
+                <button class="btn btn-primary" onclick="initializeTest()">🚀 初始化测试</button>
+                <button class="btn btn-success" onclick="startSyncTest()">▶️ 开始同步测试</button>
+                <button class="btn btn-warning" onclick="simulateConflict()">⚠️ 模拟冲突</button>
+                <button class="btn btn-danger" onclick="clearTest()">🧹 清除测试</button>
+            </div>
+        </div>
+
+        <!-- 连接状态 -->
+        <div class="test-section">
+            <h3>🔗 连接状态</h3>
+            <div class="connection-status">
+                <div class="status-indicator" id="wsStatus"></div>
+                <span id="wsStatusText">WebSocket: 未连接</span>
+                <div class="status-indicator" id="apiStatus"></div>
+                <span id="apiStatusText">API: 未测试</span>
+            </div>
+            <div id="connectionInfo" class="status info" style="display: none;">
+                等待连接测试...
+            </div>
+        </div>
+
+        <!-- 用户模拟 -->
+        <div class="test-section">
+            <h3>👥 用户模拟</h3>
+            <div id="userSimulation" class="user-simulation">
+                <!-- 用户卡片将在这里动态生成 -->
+            </div>
+        </div>
+
+        <!-- 同步测试结果 -->
+        <div class="test-section">
+            <h3>📊 同步测试结果</h3>
+            <div id="syncResults">
+                <div class="status info">等待开始测试...</div>
+            </div>
+        </div>
+
+        <!-- 实时日志 -->
+        <div class="test-section">
+            <h3>📝 实时日志</h3>
+            <div class="test-controls">
+                <button class="btn btn-warning" onclick="clearLogs()">清除日志</button>
+                <button class="btn btn-primary" onclick="exportLogs()">导出日志</button>
+            </div>
+            <div id="logContainer" class="log-container">
+                <div class="log-entry info">等待测试开始...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script>
+        // 全局变量
+        let socket = null;
+        let currentEventId = null;
+        let users = [];
+        let testResults = {
+            websocketConnected: false,
+            apiResponding: false,
+            syncWorking: false,
+            conflicts: []
+        };
+
+        // 日志系统
+        function addLog(message, type = 'info') {
+            const logContainer = document.getElementById('logContainer');
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry ${type}`;
+            logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        function clearLogs() {
+            document.getElementById('logContainer').innerHTML = '';
+        }
+
+        function exportLogs() {
+            const logs = document.getElementById('logContainer').innerText;
+            const blob = new Blob([logs], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `timee-sync-test-${new Date().toISOString().slice(0, 19)}.log`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // WebSocket 连接管理
+        function initializeWebSocket() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            
+            try {
+                socket = io(apiUrl, {
+                    transports: ['websocket', 'polling'],
+                    timeout: 10000,
+                    reconnection: true,
+                    reconnectionAttempts: 3,
+                    reconnectionDelay: 1000,
+                });
+
+                socket.on('connect', () => {
+                    addLog('✅ WebSocket连接成功', 'websocket');
+                    updateConnectionStatus('ws', 'connected');
+                    testResults.websocketConnected = true;
+                    
+                    if (currentEventId) {
+                        socket.emit('join-event', currentEventId);
+                        addLog(`🚪 加入事件房间: ${currentEventId}`, 'websocket');
+                    }
+                });
+
+                socket.on('disconnect', () => {
+                    addLog('❌ WebSocket连接断开', 'error');
+                    updateConnectionStatus('ws', 'disconnected');
+                    testResults.websocketConnected = false;
+                });
+
+                socket.on('connect_error', (error) => {
+                    addLog(`❌ WebSocket连接错误: ${error.message}`, 'error');
+                    updateConnectionStatus('ws', 'error');
+                    testResults.websocketConnected = false;
+                });
+
+                // 监听实时事件
+                socket.on('response_created', (data) => {
+                    addLog(`📡 收到响应创建事件: ${JSON.stringify(data)}`, 'websocket');
+                    handleRealtimeUpdate(data);
+                });
+
+                socket.on('response_updated', (data) => {
+                    addLog(`📡 收到响应更新事件: ${JSON.stringify(data)}`, 'websocket');
+                    handleRealtimeUpdate(data);
+                });
+
+                socket.on('participants_updated', (data) => {
+                    addLog(`📡 收到参与者更新事件: ${JSON.stringify(data)}`, 'websocket');
+                    handleParticipantsUpdate(data);
+                });
+
+                socket.on('joined-event', (data) => {
+                    addLog(`🚪 成功加入事件房间: ${JSON.stringify(data)}`, 'websocket');
+                });
+
+            } catch (error) {
+                addLog(`❌ WebSocket初始化失败: ${error.message}`, 'error');
+                updateConnectionStatus('ws', 'error');
+            }
+        }
+
+        function updateConnectionStatus(type, status) {
+            const indicator = document.getElementById(`${type}Status`);
+            const text = document.getElementById(`${type}StatusText`);
+            
+            indicator.className = `status-indicator ${status}`;
+            
+            if (type === 'ws') {
+                switch (status) {
+                    case 'connected':
+                        text.textContent = 'WebSocket: 已连接';
+                        break;
+                    case 'connecting':
+                        text.textContent = 'WebSocket: 连接中';
+                        break;
+                    case 'disconnected':
+                        text.textContent = 'WebSocket: 已断开';
+                        break;
+                    case 'error':
+                        text.textContent = 'WebSocket: 连接失败';
+                        break;
+                }
+            } else if (type === 'api') {
+                switch (status) {
+                    case 'connected':
+                        text.textContent = 'API: 正常';
+                        break;
+                    case 'error':
+                        text.textContent = 'API: 异常';
+                        break;
+                }
+            }
+        }
+
+        // API 测试
+        async function testAPI() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            const eventId = document.getElementById('eventId').value;
+            
+            try {
+                updateConnectionStatus('api', 'connecting');
+                const response = await fetch(`${apiUrl}/events/${eventId}`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addLog(`✅ API测试成功: 事件 ${eventId} 存在`, 'api');
+                    updateConnectionStatus('api', 'connected');
+                    testResults.apiResponding = true;
+                    return data;
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                addLog(`❌ API测试失败: ${error.message}`, 'error');
+                updateConnectionStatus('api', 'error');
+                testResults.apiResponding = false;
+                return null;
+            }
+        }
+
+        // 用户模拟
+        function createUserSimulation() {
+            const userCount = parseInt(document.getElementById('userCount').value);
+            const container = document.getElementById('userSimulation');
+            
+            users = [];
+            container.innerHTML = '';
+            
+            for (let i = 0; i < userCount; i++) {
+                const user = {
+                    id: i + 1,
+                    name: `用户${i + 1}`,
+                    timezone: 'UTC+8',
+                    selections: new Set(),
+                    isActive: false
+                };
+                users.push(user);
+                
+                const userCard = createUserCard(user);
+                container.appendChild(userCard);
+            }
+            
+            addLog(`👥 创建了 ${userCount} 个模拟用户`, 'info');
+        }
+
+        function createUserCard(user) {
+            const card = document.createElement('div');
+            card.className = 'user-card';
+            card.id = `user-${user.id}`;
+            
+            card.innerHTML = `
+                <h4>${user.name}</h4>
+                <div class="input-group">
+                    <label>时区:</label>
+                    <select onchange="updateUserTimezone(${user.id}, this.value)">
+                        <option value="UTC+8">UTC+8 中国标准时间</option>
+                        <option value="UTC+0">UTC+0 英国时间</option>
+                        <option value="UTC-5">UTC-5 美国东部时间</option>
+                        <option value="UTC-8">UTC-8 美国西部时间</option>
+                    </select>
+                </div>
+                <div class="test-controls">
+                    <button class="btn btn-primary" onclick="activateUser(${user.id})">激活用户</button>
+                    <button class="btn btn-success" onclick="simulateUserSelection(${user.id})">模拟选择</button>
+                    <button class="btn btn-warning" onclick="submitUserData(${user.id})">提交数据</button>
+                </div>
+                <div class="time-grid" id="timeGrid-${user.id}">
+                    <!-- 时间网格将在这里生成 -->
+                </div>
+                <div class="status info" id="userStatus-${user.id}">
+                    等待激活...
+                </div>
+            `;
+            
+            generateTimeGrid(user.id);
+            return card;
+        }
+
+        function generateTimeGrid(userId) {
+            const grid = document.getElementById(`timeGrid-${userId}`);
+            const times = ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30'];
+            
+            grid.innerHTML = '';
+            times.forEach(time => {
+                const slot = document.createElement('div');
+                slot.className = 'time-slot';
+                slot.textContent = time;
+                slot.dataset.time = time;
+                slot.onclick = () => toggleTimeSlot(userId, time, slot);
+                grid.appendChild(slot);
+            });
+        }
+
+        function toggleTimeSlot(userId, time, element) {
+            const user = users.find(u => u.id === userId);
+            if (!user || !user.isActive) return;
+            
+            if (user.selections.has(time)) {
+                user.selections.delete(time);
+                element.classList.remove('selected');
+            } else {
+                user.selections.add(time);
+                element.classList.add('selected');
+            }
+            
+            updateUserStatus(userId, `选择了 ${user.selections.size} 个时间段`);
+            addLog(`👤 ${user.name} 选择/取消选择时间: ${time}`, 'info');
+        }
+
+        function updateUserStatus(userId, message) {
+            const status = document.getElementById(`userStatus-${userId}`);
+            status.textContent = message;
+        }
+
+        function activateUser(userId) {
+            const user = users.find(u => u.id === userId);
+            if (!user) return;
+            
+            // 取消其他用户的激活状态
+            users.forEach(u => {
+                u.isActive = false;
+                document.getElementById(`user-${u.id}`).classList.remove('active');
+            });
+            
+            // 激活当前用户
+            user.isActive = true;
+            document.getElementById(`user-${userId}`).classList.add('active');
+            updateUserStatus(userId, '已激活 - 可以选择时间');
+            addLog(`👤 激活用户: ${user.name}`, 'info');
+        }
+
+        function updateUserTimezone(userId, timezone) {
+            const user = users.find(u => u.id === userId);
+            if (user) {
+                user.timezone = timezone;
+                addLog(`🌍 ${user.name} 时区更新为: ${timezone}`, 'info');
+            }
+        }
+
+        async function simulateUserSelection(userId) {
+            const user = users.find(u => u.id === userId);
+            if (!user) return;
+            
+            // 随机选择2-4个时间段
+            const times = ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30'];
+            const selectCount = Math.floor(Math.random() * 3) + 2;
+            
+            user.selections.clear();
+            
+            for (let i = 0; i < selectCount; i++) {
+                const randomTime = times[Math.floor(Math.random() * times.length)];
+                user.selections.add(randomTime);
+            }
+            
+            // 更新UI
+            const grid = document.getElementById(`timeGrid-${userId}`);
+            const slots = grid.querySelectorAll('.time-slot');
+            slots.forEach(slot => {
+                const time = slot.dataset.time;
+                if (user.selections.has(time)) {
+                    slot.classList.add('selected');
+                } else {
+                    slot.classList.remove('selected');
+                }
+            });
+            
+            updateUserStatus(userId, `随机选择了 ${user.selections.size} 个时间段`);
+            addLog(`🎲 ${user.name} 随机选择了 ${selectCount} 个时间段`, 'info');
+        }
+
+        async function submitUserData(userId) {
+            const user = users.find(u => u.id === userId);
+            if (!user || user.selections.size === 0) {
+                addLog(`❌ ${user.name} 没有选择任何时间段`, 'warning');
+                return;
+            }
+            
+            const apiUrl = document.getElementById('apiUrl').value;
+            const eventId = document.getElementById('eventId').value;
+            
+            // 构造提交数据
+            const availability = Array.from(user.selections).map(time => ({
+                date: '1/1',
+                time: time,
+                dateIndex: 0,
+                timeIndex: 0,
+                type: 'available'
+            }));
+            
+            const submitData = {
+                eventId: eventId,
+                participantName: user.name,
+                userInitials: user.name.charAt(0),
+                paintMode: 'available',
+                timezone: user.timezone,
+                availableSlots: availability
+            };
+            
+            try {
+                updateUserStatus(userId, '提交中...');
+                const response = await fetch(`${apiUrl}/responses`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(submitData)
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    updateUserStatus(userId, '✅ 提交成功');
+                    addLog(`✅ ${user.name} 数据提交成功`, 'api');
+                    
+                    // 等待一段时间检查同步
+                    setTimeout(() => checkSyncStatus(userId), 2000);
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                updateUserStatus(userId, '❌ 提交失败');
+                addLog(`❌ ${user.name} 数据提交失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 实时更新处理
+        function handleRealtimeUpdate(data) {
+            addLog(`📡 处理实时更新: ${data.eventId}`, 'websocket');
+            testResults.syncWorking = true;
+            
+            // 这里可以添加更多的同步验证逻辑
+            updateSyncResults();
+        }
+
+        function handleParticipantsUpdate(data) {
+            addLog(`👥 参与者列表更新: ${data.count} 人`, 'websocket');
+        }
+
+        // 同步状态检查
+        async function checkSyncStatus(userId) {
+            const apiUrl = document.getElementById('apiUrl').value;
+            const eventId = document.getElementById('eventId').value;
+            
+            try {
+                const response = await fetch(`${apiUrl}/responses/event/${eventId}`);
+                if (response.ok) {
+                    const responses = await response.json();
+                    const userResponse = responses.find(r => r.participantName === `用户${userId}`);
+                    
+                    if (userResponse) {
+                        addLog(`✅ 用户${userId} 数据同步验证成功`, 'api');
+                        updateSyncResults();
+                    } else {
+                        addLog(`❌ 用户${userId} 数据同步验证失败`, 'error');
+                    }
+                }
+            } catch (error) {
+                addLog(`❌ 同步状态检查失败: ${error.message}`, 'error');
+            }
+        }
+
+        function updateSyncResults() {
+            const container = document.getElementById('syncResults');
+            container.innerHTML = `
+                <div class="status ${testResults.websocketConnected ? 'success' : 'error'}">
+                    WebSocket连接: ${testResults.websocketConnected ? '✅ 正常' : '❌ 异常'}
+                </div>
+                <div class="status ${testResults.apiResponding ? 'success' : 'error'}">
+                    API响应: ${testResults.apiResponding ? '✅ 正常' : '❌ 异常'}
+                </div>
+                <div class="status ${testResults.syncWorking ? 'success' : 'warning'}">
+                    实时同步: ${testResults.syncWorking ? '✅ 正常' : '⚠️ 待测试'}
+                </div>
+            `;
+        }
+
+        // 主要测试函数
+        async function initializeTest() {
+            currentEventId = document.getElementById('eventId').value;
+            
+            if (!currentEventId) {
+                alert('请输入事件ID');
+                return;
+            }
+            
+            addLog(`🚀 开始初始化测试 - 事件ID: ${currentEventId}`, 'info');
+            
+            // 测试API
+            const eventData = await testAPI();
+            if (!eventData) {
+                addLog('❌ API测试失败，无法继续测试', 'error');
+                return;
+            }
+            
+            // 初始化WebSocket
+            initializeWebSocket();
+            
+            // 创建用户模拟
+            createUserSimulation();
+            
+            addLog('✅ 测试初始化完成', 'info');
+        }
+
+        async function startSyncTest() {
+            if (!currentEventId) {
+                alert('请先初始化测试');
+                return;
+            }
+            
+            addLog('🧪 开始同步测试...', 'info');
+            
+            // 自动激活第一个用户并模拟选择
+            activateUser(1);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            await simulateUserSelection(1);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            await submitUserData(1);
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // 激活第二个用户并模拟选择
+            activateUser(2);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            await simulateUserSelection(2);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            await submitUserData(2);
+            
+            addLog('✅ 同步测试完成', 'info');
+        }
+
+        function simulateConflict() {
+            addLog('⚠️ 模拟冲突场景...', 'warning');
+            
+            // 让所有用户同时选择相同的时间段
+            users.forEach(user => {
+                user.selections.clear();
+                user.selections.add('10:00');
+                user.selections.add('10:30');
+                user.selections.add('11:00');
+                
+                // 更新UI
+                const grid = document.getElementById(`timeGrid-${user.id}`);
+                const slots = grid.querySelectorAll('.time-slot');
+                slots.forEach(slot => {
+                    const time = slot.dataset.time;
+                    if (user.selections.has(time)) {
+                        slot.classList.add('selected');
+                    } else {
+                        slot.classList.remove('selected');
+                    }
+                });
+            });
+            
+            addLog('⚠️ 所有用户选择了相同的时间段，准备测试并发冲突', 'warning');
+        }
+
+        function clearTest() {
+            if (socket) {
+                socket.disconnect();
+                socket = null;
+            }
+            
+            currentEventId = null;
+            users = [];
+            testResults = {
+                websocketConnected: false,
+                apiResponding: false,
+                syncWorking: false,
+                conflicts: []
+            };
+            
+            document.getElementById('userSimulation').innerHTML = '';
+            document.getElementById('syncResults').innerHTML = '<div class="status info">等待开始测试...</div>';
+            
+            updateConnectionStatus('ws', 'disconnected');
+            updateConnectionStatus('api', 'error');
+            
+            clearLogs();
+            addLog('🧹 测试已清除', 'info');
+        }
+
+        // 页面加载时的初始化
+        window.addEventListener('load', () => {
+            addLog('📄 页面加载完成，准备开始测试', 'info');
+        });
+    </script>
+</body>
+</html> 

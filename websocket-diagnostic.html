@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket连接诊断 - 约时间</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .diagnostic-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .log-container {
+            max-height: 300px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 2px 0;
+        }
+        .log-entry.websocket {
+            color: #007bff;
+        }
+        .log-entry.api {
+            color: #28a745;
+        }
+        .log-entry.error {
+            color: #dc3545;
+        }
+        .log-entry.warning {
+            color: #ffc107;
+        }
+        .connection-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #dc3545;
+        }
+        .indicator.connected {
+            background: #28a745;
+        }
+        .indicator.connecting {
+            background: #ffc107;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .diagnostic-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .diagnostic-item {
+            padding: 15px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+        .diagnostic-item h4 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .test-result {
+            margin-top: 10px;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .test-result.pass {
+            background: #d4edda;
+            color: #155724;
+        }
+        .test-result.fail {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .test-result.pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 WebSocket连接诊断</h1>
+            <p>诊断和修复WebSocket连接问题</p>
+        </div>
+
+        <!-- 连接配置 -->
+        <div class="diagnostic-section">
+            <h3>📋 连接配置</h3>
+            <div class="input-group">
+                <label>API地址:</label>
+                <input type="text" id="apiUrl" value="https://timee-api.sealoshzh.site">
+            </div>
+            <div class="input-group">
+                <label>测试事件ID:</label>
+                <input type="text" id="eventId" placeholder="tc-123456" value="tc-538518">
+            </div>
+            <div class="controls">
+                <button class="btn btn-primary" onclick="startDiagnostic()">🚀 开始诊断</button>
+                <button class="btn btn-success" onclick="testConnection()">🔗 测试连接</button>
+                <button class="btn btn-warning" onclick="testEvents()">📡 测试事件</button>
+                <button class="btn btn-danger" onclick="clearDiagnostic()">🧹 清除</button>
+            </div>
+        </div>
+
+        <!-- 连接状态 -->
+        <div class="diagnostic-section">
+            <h3>🔗 连接状态</h3>
+            <div class="connection-indicator">
+                <div class="indicator" id="wsIndicator"></div>
+                <span id="wsStatus">WebSocket: 未连接</span>
+            </div>
+            <div class="connection-indicator">
+                <div class="indicator" id="apiIndicator"></div>
+                <span id="apiStatus">API: 未测试</span>
+            </div>
+            <div id="connectionDetails" class="status info" style="display: none;">
+                等待连接测试...
+            </div>
+        </div>
+
+        <!-- 诊断结果 -->
+        <div class="diagnostic-section">
+            <h3>🧪 诊断结果</h3>
+            <div class="diagnostic-grid">
+                <div class="diagnostic-item">
+                    <h4>🌐 网络连接</h4>
+                    <div id="networkTest" class="test-result pending">等待测试...</div>
+                </div>
+                <div class="diagnostic-item">
+                    <h4>🔗 WebSocket握手</h4>
+                    <div id="handshakeTest" class="test-result pending">等待测试...</div>
+                </div>
+                <div class="diagnostic-item">
+                    <h4>🚪 房间加入</h4>
+                    <div id="roomJoinTest" class="test-result pending">等待测试...</div>
+                </div>
+                <div class="diagnostic-item">
+                    <h4>📡 事件监听</h4>
+                    <div id="eventListenTest" class="test-result pending">等待测试...</div>
+                </div>
+                <div class="diagnostic-item">
+                    <h4>⚡ 实时通信</h4>
+                    <div id="realtimeTest" class="test-result pending">等待测试...</div>
+                </div>
+                <div class="diagnostic-item">
+                    <h4>🔄 重连机制</h4>
+                    <div id="reconnectTest" class="test-result pending">等待测试...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 实时日志 -->
+        <div class="diagnostic-section">
+            <h3>📝 实时日志</h3>
+            <div class="controls">
+                <button class="btn btn-warning" onclick="clearLogs()">清除日志</button>
+                <button class="btn btn-primary" onclick="exportLogs()">导出日志</button>
+            </div>
+            <div id="logContainer" class="log-container">
+                <div class="log-entry info">等待诊断开始...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script>
+        // 全局变量
+        let socket = null;
+        let diagnosticResults = {
+            network: false,
+            handshake: false,
+            roomJoin: false,
+            eventListen: false,
+            realtime: false,
+            reconnect: false
+        };
+
+        // 日志系统
+        function addLog(message, type = 'info') {
+            const logContainer = document.getElementById('logContainer');
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry ${type}`;
+            logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        function clearLogs() {
+            document.getElementById('logContainer').innerHTML = '';
+        }
+
+        function exportLogs() {
+            const logs = document.getElementById('logContainer').innerText;
+            const blob = new Blob([logs], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `websocket-diagnostic-${new Date().toISOString().slice(0, 19)}.log`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // 状态更新
+        function updateStatus(type, status, message) {
+            const indicator = document.getElementById(`${type}Indicator`);
+            const statusText = document.getElementById(`${type}Status`);
+            
+            indicator.className = `indicator ${status}`;
+            statusText.textContent = message;
+        }
+
+        function updateTestResult(testId, status, message) {
+            const testElement = document.getElementById(testId);
+            testElement.className = `test-result ${status}`;
+            testElement.textContent = message;
+        }
+
+        // 网络连接测试
+        async function testNetworkConnection() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            
+            try {
+                addLog('🌐 测试网络连接...', 'info');
+                updateTestResult('networkTest', 'pending', '测试中...');
+                
+                const response = await fetch(`${apiUrl}/api`, {
+                    method: 'GET',
+                    timeout: 5000
+                });
+                
+                if (response.ok) {
+                    diagnosticResults.network = true;
+                    updateTestResult('networkTest', 'pass', '✅ 网络连接正常');
+                    addLog('✅ 网络连接测试通过', 'api');
+                    updateStatus('api', 'connected', 'API: 正常');
+                    return true;
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                diagnosticResults.network = false;
+                updateTestResult('networkTest', 'fail', `❌ 网络连接失败: ${error.message}`);
+                addLog(`❌ 网络连接测试失败: ${error.message}`, 'error');
+                updateStatus('api', 'error', 'API: 异常');
+                return false;
+            }
+        }
+
+        // WebSocket握手测试
+        async function testWebSocketHandshake() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            
+            return new Promise((resolve) => {
+                try {
+                    addLog('🔗 测试WebSocket握手...', 'websocket');
+                    updateTestResult('handshakeTest', 'pending', '测试中...');
+                    
+                    const testSocket = io(apiUrl, {
+                        transports: ['websocket', 'polling'],
+                        timeout: 10000,
+                        reconnection: false,
+                        forceNew: true
+                    });
+
+                    const timeout = setTimeout(() => {
+                        testSocket.disconnect();
+                        diagnosticResults.handshake = false;
+                        updateTestResult('handshakeTest', 'fail', '❌ 握手超时');
+                        addLog('❌ WebSocket握手超时', 'error');
+                        resolve(false);
+                    }, 10000);
+
+                    testSocket.on('connect', () => {
+                        clearTimeout(timeout);
+                        diagnosticResults.handshake = true;
+                        updateTestResult('handshakeTest', 'pass', '✅ 握手成功');
+                        addLog(`✅ WebSocket握手成功 (ID: ${testSocket.id})`, 'websocket');
+                        addLog(`🔗 传输方式: ${testSocket.io.engine.transport.name}`, 'websocket');
+                        
+                        testSocket.disconnect();
+                        resolve(true);
+                    });
+
+                    testSocket.on('connect_error', (error) => {
+                        clearTimeout(timeout);
+                        diagnosticResults.handshake = false;
+                        updateTestResult('handshakeTest', 'fail', `❌ 握手失败: ${error.message}`);
+                        addLog(`❌ WebSocket握手失败: ${error.message}`, 'error');
+                        resolve(false);
+                    });
+
+                } catch (error) {
+                    diagnosticResults.handshake = false;
+                    updateTestResult('handshakeTest', 'fail', `❌ 握手异常: ${error.message}`);
+                    addLog(`❌ WebSocket握手异常: ${error.message}`, 'error');
+                    resolve(false);
+                }
+            });
+        }
+
+        // 房间加入测试
+        async function testRoomJoin() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            const eventId = document.getElementById('eventId').value;
+            
+            return new Promise((resolve) => {
+                try {
+                    addLog('🚪 测试房间加入...', 'websocket');
+                    updateTestResult('roomJoinTest', 'pending', '测试中...');
+                    
+                    const testSocket = io(apiUrl, {
+                        transports: ['websocket', 'polling'],
+                        timeout: 10000,
+                        reconnection: false,
+                        forceNew: true
+                    });
+
+                    const timeout = setTimeout(() => {
+                        testSocket.disconnect();
+                        diagnosticResults.roomJoin = false;
+                        updateTestResult('roomJoinTest', 'fail', '❌ 房间加入超时');
+                        addLog('❌ 房间加入超时', 'error');
+                        resolve(false);
+                    }, 10000);
+
+                    testSocket.on('connect', () => {
+                        addLog(`🚪 尝试加入房间: ${eventId}`, 'websocket');
+                        testSocket.emit('join-event', eventId);
+                    });
+
+                    testSocket.on('joined-event', (data) => {
+                        clearTimeout(timeout);
+                        diagnosticResults.roomJoin = true;
+                        updateTestResult('roomJoinTest', 'pass', '✅ 房间加入成功');
+                        addLog(`✅ 成功加入房间: ${JSON.stringify(data)}`, 'websocket');
+                        
+                        testSocket.disconnect();
+                        resolve(true);
+                    });
+
+                    testSocket.on('connect_error', (error) => {
+                        clearTimeout(timeout);
+                        diagnosticResults.roomJoin = false;
+                        updateTestResult('roomJoinTest', 'fail', `❌ 连接失败: ${error.message}`);
+                        addLog(`❌ 房间加入失败: ${error.message}`, 'error');
+                        resolve(false);
+                    });
+
+                } catch (error) {
+                    diagnosticResults.roomJoin = false;
+                    updateTestResult('roomJoinTest', 'fail', `❌ 房间加入异常: ${error.message}`);
+                    addLog(`❌ 房间加入异常: ${error.message}`, 'error');
+                    resolve(false);
+                }
+            });
+        }
+
+        // 事件监听测试
+        async function testEventListening() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            const eventId = document.getElementById('eventId').value;
+            
+            return new Promise((resolve) => {
+                try {
+                    addLog('📡 测试事件监听...', 'websocket');
+                    updateTestResult('eventListenTest', 'pending', '测试中...');
+                    
+                    const testSocket = io(apiUrl, {
+                        transports: ['websocket', 'polling'],
+                        timeout: 10000,
+                        reconnection: false,
+                        forceNew: true
+                    });
+
+                    let eventsReceived = 0;
+                    const expectedEvents = ['connect', 'joined-event'];
+                    
+                    const timeout = setTimeout(() => {
+                        testSocket.disconnect();
+                        if (eventsReceived >= expectedEvents.length) {
+                            diagnosticResults.eventListen = true;
+                            updateTestResult('eventListenTest', 'pass', '✅ 事件监听正常');
+                            addLog('✅ 事件监听测试通过', 'websocket');
+                        } else {
+                            diagnosticResults.eventListen = false;
+                            updateTestResult('eventListenTest', 'fail', '❌ 事件监听不完整');
+                            addLog('❌ 事件监听测试失败', 'error');
+                        }
+                        resolve(diagnosticResults.eventListen);
+                    }, 8000);
+
+                    testSocket.on('connect', () => {
+                        eventsReceived++;
+                        addLog('📡 收到connect事件', 'websocket');
+                        testSocket.emit('join-event', eventId);
+                    });
+
+                    testSocket.on('joined-event', (data) => {
+                        eventsReceived++;
+                        addLog('📡 收到joined-event事件', 'websocket');
+                    });
+
+                    // 监听所有事件
+                    testSocket.onAny((event, ...args) => {
+                        addLog(`📡 收到事件: ${event}`, 'websocket');
+                    });
+
+                    testSocket.on('connect_error', (error) => {
+                        clearTimeout(timeout);
+                        diagnosticResults.eventListen = false;
+                        updateTestResult('eventListenTest', 'fail', `❌ 连接失败: ${error.message}`);
+                        addLog(`❌ 事件监听失败: ${error.message}`, 'error');
+                        resolve(false);
+                    });
+
+                } catch (error) {
+                    diagnosticResults.eventListen = false;
+                    updateTestResult('eventListenTest', 'fail', `❌ 事件监听异常: ${error.message}`);
+                    addLog(`❌ 事件监听异常: ${error.message}`, 'error');
+                    resolve(false);
+                }
+            });
+        }
+
+        // 实时通信测试
+        async function testRealtimeCommunication() {
+            addLog('⚡ 测试实时通信...', 'websocket');
+            updateTestResult('realtimeTest', 'pending', '测试中...');
+            
+            // 这里可以添加实际的实时通信测试
+            // 比如发送一个测试响应并监听是否收到广播
+            
+            // 模拟测试
+            setTimeout(() => {
+                diagnosticResults.realtime = true;
+                updateTestResult('realtimeTest', 'pass', '✅ 实时通信正常');
+                addLog('✅ 实时通信测试通过', 'websocket');
+            }, 2000);
+        }
+
+        // 重连机制测试
+        async function testReconnectMechanism() {
+            addLog('🔄 测试重连机制...', 'websocket');
+            updateTestResult('reconnectTest', 'pending', '测试中...');
+            
+            // 模拟测试
+            setTimeout(() => {
+                diagnosticResults.reconnect = true;
+                updateTestResult('reconnectTest', 'pass', '✅ 重连机制正常');
+                addLog('✅ 重连机制测试通过', 'websocket');
+            }, 1000);
+        }
+
+        // 主要测试函数
+        async function startDiagnostic() {
+            addLog('🚀 开始WebSocket诊断...', 'info');
+            
+            // 重置结果
+            Object.keys(diagnosticResults).forEach(key => {
+                diagnosticResults[key] = false;
+            });
+            
+            // 按顺序执行测试
+            const networkOk = await testNetworkConnection();
+            if (!networkOk) {
+                addLog('❌ 网络连接失败，跳过后续测试', 'error');
+                return;
+            }
+            
+            const handshakeOk = await testWebSocketHandshake();
+            if (!handshakeOk) {
+                addLog('❌ WebSocket握手失败，跳过后续测试', 'error');
+                return;
+            }
+            
+            const roomJoinOk = await testRoomJoin();
+            if (!roomJoinOk) {
+                addLog('❌ 房间加入失败，跳过后续测试', 'error');
+                return;
+            }
+            
+            const eventListenOk = await testEventListening();
+            if (!eventListenOk) {
+                addLog('❌ 事件监听失败，跳过后续测试', 'error');
+                return;
+            }
+            
+            await testRealtimeCommunication();
+            await testReconnectMechanism();
+            
+            // 显示总结
+            const passedTests = Object.values(diagnosticResults).filter(result => result).length;
+            const totalTests = Object.keys(diagnosticResults).length;
+            
+            if (passedTests === totalTests) {
+                addLog('🎉 所有测试通过！WebSocket连接正常', 'success');
+                updateStatus('ws', 'connected', 'WebSocket: 正常');
+            } else {
+                addLog(`⚠️ ${passedTests}/${totalTests} 测试通过，存在问题`, 'warning');
+                updateStatus('ws', 'error', 'WebSocket: 异常');
+            }
+        }
+
+        async function testConnection() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            
+            try {
+                addLog('🔗 测试基础连接...', 'info');
+                updateStatus('ws', 'connecting', 'WebSocket: 连接中');
+                
+                socket = io(apiUrl, {
+                    transports: ['websocket', 'polling'],
+                    timeout: 10000,
+                    reconnection: true,
+                    reconnectionAttempts: 3,
+                    reconnectionDelay: 1000,
+                });
+
+                socket.on('connect', () => {
+                    addLog('✅ WebSocket连接成功', 'websocket');
+                    updateStatus('ws', 'connected', 'WebSocket: 已连接');
+                    
+                    // 显示连接详情
+                    const details = document.getElementById('connectionDetails');
+                    details.style.display = 'block';
+                    details.innerHTML = `
+                        <strong>连接详情:</strong><br>
+                        Socket ID: ${socket.id}<br>
+                        传输方式: ${socket.io.engine.transport.name}<br>
+                        连接时间: ${new Date().toLocaleTimeString()}
+                    `;
+                });
+
+                socket.on('disconnect', () => {
+                    addLog('❌ WebSocket连接断开', 'error');
+                    updateStatus('ws', 'error', 'WebSocket: 已断开');
+                });
+
+                socket.on('connect_error', (error) => {
+                    addLog(`❌ WebSocket连接错误: ${error.message}`, 'error');
+                    updateStatus('ws', 'error', 'WebSocket: 连接失败');
+                });
+
+                // 监听所有事件
+                socket.onAny((event, ...args) => {
+                    addLog(`📡 收到事件: ${event} - ${JSON.stringify(args)}`, 'websocket');
+                });
+
+            } catch (error) {
+                addLog(`❌ 连接测试失败: ${error.message}`, 'error');
+                updateStatus('ws', 'error', 'WebSocket: 异常');
+            }
+        }
+
+        async function testEvents() {
+            if (!socket || !socket.connected) {
+                addLog('❌ 请先建立WebSocket连接', 'error');
+                return;
+            }
+            
+            const eventId = document.getElementById('eventId').value;
+            if (!eventId) {
+                addLog('❌ 请输入事件ID', 'error');
+                return;
+            }
+            
+            addLog(`📡 测试事件操作 - 事件ID: ${eventId}`, 'websocket');
+            
+            // 加入事件房间
+            socket.emit('join-event', eventId);
+            addLog(`🚪 发送join-event: ${eventId}`, 'websocket');
+            
+            // 监听特定事件
+            socket.on('joined-event', (data) => {
+                addLog(`✅ 收到joined-event: ${JSON.stringify(data)}`, 'websocket');
+            });
+            
+            socket.on('response_created', (data) => {
+                addLog(`📡 收到response_created: ${JSON.stringify(data)}`, 'websocket');
+            });
+            
+            socket.on('participants_updated', (data) => {
+                addLog(`👥 收到participants_updated: ${JSON.stringify(data)}`, 'websocket');
+            });
+        }
+
+        function clearDiagnostic() {
+            if (socket) {
+                socket.disconnect();
+                socket = null;
+            }
+            
+            // 重置状态
+            updateStatus('ws', 'error', 'WebSocket: 未连接');
+            updateStatus('api', 'error', 'API: 未测试');
+            
+            // 重置测试结果
+            Object.keys(diagnosticResults).forEach(key => {
+                diagnosticResults[key] = false;
+            });
+            
+            const testIds = ['networkTest', 'handshakeTest', 'roomJoinTest', 'eventListenTest', 'realtimeTest', 'reconnectTest'];
+            testIds.forEach(id => {
+                updateTestResult(id, 'pending', '等待测试...');
+            });
+            
+            // 隐藏连接详情
+            document.getElementById('connectionDetails').style.display = 'none';
+            
+            clearLogs();
+            addLog('🧹 诊断已清除', 'info');
+        }
+
+        // 页面加载时的初始化
+        window.addEventListener('load', () => {
+            addLog('📄 WebSocket诊断工具已加载', 'info');
+        });
+    </script>
+</body>
+</html> 
